@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Scheda Personaggio NFC - Eladan</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1e1e1e;
+            --primary-color: #bb86fc;
+            --secondary-color: #03dac6;
+            --danger-color: #cf6679;
+            --text-color: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            padding-bottom: 90px;
+        }
+
+        /* HEADER & ISPIRAZIONE */
+        header { background-color: var(--surface-color); padding: 20px; text-align: center; border-bottom: 1px solid #333; }
+        header h1 { margin: 0; font-size: 24px; color: var(--primary-color); display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        .inspiration-container { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-muted); background: #2c2c2c; padding: 4px 8px; border-radius: 20px; cursor: pointer; border: 1px solid transparent; transition: all 0.3s; }
+        .inspiration-container.active { border-color: var(--secondary-color); background: rgba(3, 218, 198, 0.1); color: var(--secondary-color); }
+        .inspiration-btn { opacity: 0.3; filter: grayscale(100%); transition: all 0.3s; font-size: 16px; }
+        .inspiration-btn.active { opacity: 1; filter: grayscale(0%); transform: scale(1.2); }
+        .level-up-btn { background-color: var(--secondary-color); color: #000; border: none; border-radius: 4px; padding: 4px 10px; font-size: 12px; font-weight: bold; cursor: pointer; margin-left: 10px; }
+
+        /* SEZIONI E CARDS */
+        .section { display: none; padding: 20px; animation: fadeIn 0.3s; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card { background-color: var(--surface-color); border-radius: var(--border-radius); padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; margin-bottom: 15px; }
+        .skills-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        
+        .stat-box, .skill-btn { background-color: #2c2c2c; border-radius: 8px; padding: 10px; cursor: pointer; border: 1px solid #333; transition: transform 0.1s; }
+        .stat-box:active, .skill-btn:active { transform: scale(0.95); border-color: var(--primary-color); }
+        .stat-box span { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; }
+        .stat-box strong { font-size: 18px; }
+        .skill-btn { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; }
+        .skill-btn span.name { font-size: 12px; font-weight: bold; }
+        .skill-btn span.mod { color: var(--primary-color); font-size: 14px; }
+        
+        /* HP & RIPOSI */
+        .hp-controls { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 15px; }
+        .hp-btn { background: #444; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .hp-btn.minus { background-color: var(--danger-color); color: #000; }
+        .hp-btn.plus { background-color: var(--secondary-color); color: #000; }
+        
+        .hd-container { display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 15px; }
+        .hd-icon { font-size: 22px; cursor: default; opacity: 0.2; transition: all 0.2s; }
+        .hd-icon.available { opacity: 1; text-shadow: 0 0 5px rgba(255,255,255,0.3); }
+
+        .rest-buttons { display: flex; gap: 10px; justify-content: center; }
+        .rest-btn { padding: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; flex: 1; font-size: 13px; color: #000; transition: transform 0.1s; }
+        .rest-btn:active { transform: scale(0.95); }
+        .btn-short-rest { background-color: var(--secondary-color); }
+        .btn-long-rest { background-color: var(--primary-color); }
+
+        /* DISPLAY SCHERMO */
+        .display-screen { text-align: center; padding: 15px; background: #000; border: 2px solid #333; border-radius: 8px; margin-bottom: 15px; }
+        .display-screen span { display: block; font-size: 12px; color: var(--text-muted); }
+        .display-screen h2 { margin: 5px 0 0 0; font-size: 38px; color: var(--text-color); }
+        .display-screen .crit-text { font-size: 14px; color: #ffd700; display: block; margin-top: 5px; min-height: 20px; font-weight: bold; }
+
+        /* BATTAGLIA CARDS */
+        .attack-card { background-color: #2c2c2c; border-radius: 8px; padding: 12px; margin-bottom: 10px; border: 1px solid #444; }
+        .attack-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .attack-name { font-weight: bold; color: var(--text-color); font-size: 15px; display: flex; align-items: center; gap: 5px; }
+        .attack-stats { font-size: 11px; color: var(--text-muted); background: #1e1e1e; padding: 4px 8px; border-radius: 4px; }
+        .attack-actions { display: flex; gap: 10px; }
+        .action-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; display:flex; align-items:center; justify-content:center; gap:5px; transition: transform 0.1s; }
+        .action-btn:active { transform: scale(0.95); }
+        .btn-hit { background-color: var(--primary-color); color: #000; }
+        .btn-dmg { background-color: var(--danger-color); color: #000; }
+        .btn-heal { background-color: var(--secondary-color); color: #000; }
+
+        /* MENU A TENDINA E INCANTESIMI */
+        details { background-color: #2c2c2c; border-radius: 8px; margin-bottom: 10px; padding: 10px; }
+        summary { font-weight: bold; cursor: pointer; list-style: none; display: flex; justify-content: space-between; }
+        summary::-webkit-details-marker { display: none; }
+        .details-content { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #444; font-size: 14px; color: #ccc; }
+        .spell-tags span { background: #444; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-right: 5px; color: var(--secondary-color); display: inline-block; margin-bottom: 5px; }
+        .spell-level { color: var(--primary-color); font-weight: bold; margin: 15px 0 5px 0; border-bottom: 1px solid #333; padding-bottom: 5px;}
+        
+        .slot-container { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; }
+        .slot-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--primary-color); background: transparent; cursor: pointer; transition: all 0.2s; }
+        .slot-dot.used { background: var(--primary-color); box-shadow: 0 0 6px var(--primary-color); }
+
+        /* INVENTARIO, MONETE E NOTE */
+        .inv-form select, .inv-form input { width: 100%; background: #2c2c2c; border: 1px solid #444; color: white; padding: 10px; margin-bottom: 10px; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+        .inv-form button { width: 100%; background-color: var(--primary-color); color: #000; font-weight: bold; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        .reset-btn { background-color: transparent; border: 1px solid var(--danger-color); padding: 10px; border-radius: 8px; width: 100%; cursor: pointer; margin-top: 15px; font-weight: bold; }
+        
+        .currency-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; margin-top: 10px; }
+        .currency-box { background-color: #2c2c2c; padding: 10px; border-radius: 8px; }
+        .currency-box span { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; }
+        .currency-box input { width: 80%; background: #1e1e1e; border: 1px solid #444; color: white; padding: 5px; text-align: center; border-radius: 4px; font-weight: bold; }
+        
+        /* STILI DADI */
+        .dice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .dice-btn { background-color: #2c2c2c; color: var(--text-color); border: 2px solid #333; border-radius: 8px; padding: 15px 0; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .dice-btn:active { background-color: var(--primary-color); color: #fff; transform: scale(0.95); }
+        #dice-log { list-style: none; padding: 0; margin: 0; font-size: 14px; color: var(--text-muted); }
+        #dice-log li { padding: 8px 0; border-bottom: 1px dashed #333; }
+
+        /* BOTTOM NAVIGATION */
+        nav { position: fixed; bottom: 0; width: 100%; background-color: var(--surface-color); display: flex; padding: 8px 0; border-top: 1px solid #333; z-index: 1000; }
+        nav button { background: none; border: none; color: var(--text-muted); font-size: 10px; font-weight: 600; display: flex; flex-direction: column; align-items: center; padding: 5px 2px; cursor: pointer; flex: 1; }
+        nav button.active { color: var(--primary-color); background-color: rgba(187, 134, 252, 0.1); border-radius: 8px; }
+        nav button i { font-size: 20px; margin-bottom: 4px; font-style: normal; }
+
+        /* EXPORT PDF HIDDEN TEMPLATE */
+        #pdf-export-template { display: none; background: white; color: black; padding: 40px; font-family: serif; width: 800px; }
+        .pdf-header { text-align: center; border-bottom: 2px solid black; margin-bottom: 20px; padding-bottom: 10px; }
+        .pdf-header h1 { font-size: 32px; margin: 0; text-transform: uppercase; }
+        .pdf-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .pdf-box { border: 1px solid black; padding: 10px; border-radius: 5px; }
+        .pdf-box h3 { font-size: 12px; text-transform: uppercase; margin: 0 0 5px 0; color: #555; }
+        .pdf-list { font-size: 14px; }
+        .pdf-list div { border-bottom: 1px dotted #ccc; padding: 4px 0; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>
+            <span id="char-name">Eladan</span> 
+            <div id="insp-container" class="inspiration-container" onclick="toggleInspiration()">
+                <span id="insp-icon" class="inspiration-btn" title="Ispirazione Eroica">✅</span>
+                <span>Ispirazione Eroica</span>
+            </div>
+        </h1>
+        <p>
+            <span id="char-subtitle">Fighter | Wood Elf</span> - Lvl <span id="char-level">5</span>
+            <button class="level-up-btn" onclick="levelUp()">+ Lv</button>
+        </p>
+    </header>
+
+    <!-- 1. SCHEDA GENERALE & ABILITÀ -->
+    <div id="sec-scheda" class="section active">
+        
+        <div class="display-screen">
+            <span id="scheda-result-label">Seleziona Caratteristica o Abilità</span>
+            <h2 id="scheda-result-value">--</h2>
+            <div class="crit-text" id="scheda-result-crit"></div>
+        </div>
+
+        <div class="card" style="text-align: center;">
+            <span style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 10px;">PUNTI FERITA ATTUALI / MAX</span>
+            <div class="hp-controls">
+                <button class="hp-btn minus" onclick="changeHP(-1)">-</button>
+                <div>
+                    <strong class="char-hp-current-display" style="font-size: 28px; color: var(--secondary-color);">44</strong> 
+                    <span style="font-size: 18px; color: var(--text-muted);">/ <span class="char-hp-max-display">44</span></span>
+                </div>
+                <button class="hp-btn plus" onclick="changeHP(1)">+</button>
+            </div>
+            
+            <div class="hd-container" id="hd-container"></div>
+            <div class="rest-buttons">
+                <button class="rest-btn btn-short-rest" onclick="shortRest()">Riposo Breve</button>
+                <button class="rest-btn btn-long-rest" onclick="longRest()">Riposo Lungo</button>
+            </div>
+        </div>
+
+        <div class="stats-grid card">
+            <div class="stat-box" style="cursor: default;"><span>CA</span><strong id="char-ac">15</strong></div>
+            <div class="stat-box" style="cursor: pointer; border: 1px solid var(--secondary-color);" onclick="rollStat('Iniziativa', characterData.initiative)">
+                <span>INIZIATIVA 🎲</span><strong id="char-init">+2</strong>
+            </div>
+            <div class="stat-box" style="cursor: default;"><span>VELOCITÀ</span><strong>10.5m</strong></div>
+        </div>
+        
+        <div class="card">
+            <h3 style="margin-top:0;">Caratteristiche (Clicca per tirare)</h3>
+            <div class="stats-grid" id="stats-container"></div>
+        </div>
+        
+        <div class="card">
+            <h3 style="margin-top:0;">Tiri Salvezza (Clicca per tirare)</h3>
+            <div class="stats-grid" id="saves-container"></div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top:0;">Abilità</h3>
+            <div class="skills-grid" id="skills-container"></div>
+        </div>
+    </div>
+
+    <!-- 2. BATTAGLIA -->
+    <div id="sec-battaglia" class="section">
+        <div class="card" style="text-align: center; border: 1px solid var(--danger-color); margin-bottom: 10px;">
+            <span style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 10px;">PUNTI FERITA (COLLEGATI)</span>
+            <div class="hp-controls" style="margin-bottom: 5px;">
+                <button class="hp-btn minus" onclick="changeHP(-1)">-</button>
+                <div>
+                    <strong class="char-hp-current-display" style="font-size: 28px; color: var(--secondary-color);">44</strong> 
+                    <span style="font-size: 18px; color: var(--text-muted);">/ <span class="char-hp-max-display">44</span></span>
+                </div>
+                <button class="hp-btn plus" onclick="changeHP(1)">+</button>
+            </div>
+        </div>
+
+        <div class="display-screen">
+            <span id="battle-result-label">Schermo Tiri Battaglia</span>
+            <h2 id="battle-result-value">--</h2>
+            <div class="crit-text" id="battle-result-crit"></div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top:0;">Armi e Incantesimi</h3>
+            <div id="battle-attacks-container"></div>
+        </div>
+
+        <div class="card" id="battle-potions-container" style="display:none;">
+            <h3 style="margin-top:0;">Consumabili</h3>
+            <div id="battle-potions-list"></div>
+        </div>
+    </div>
+
+    <!-- 3. INCANTESIMI -->
+    <div id="sec-incantesimi" class="section">
+        <div class="stats-grid card">
+            <div class="stat-box"><span>CD SALVEZZA</span><strong id="char-dc">12</strong></div>
+            <div class="stat-box"><span>BONUS ATTACCO</span><strong id="char-spell-atk">+4</strong></div>
+            <div class="stat-box"><span>SECOND WIND</span><strong id="char-sp">2</strong></div>
+        </div>
+        <div class="card" id="spells-container"></div>
+    </div>
+
+    <!-- 4. TRATTI -->
+    <div id="sec-tratti" class="section">
+        <div class="card" id="features-container"></div>
+    </div>
+
+    <!-- 5. INVENTARIO -->
+    <div id="sec-inventario" class="section">
+        <div class="card inv-form">
+            <h3>Aggiungi Oggetto</h3>
+            <select id="inv-type" onchange="toggleInvForm()">
+                <option value="item">🎒 Oggetto Base</option>
+                <option value="weapon">⚔️ Arma</option>
+                <option value="potion">🧪 Pozione</option>
+            </select>
+            <input type="text" id="inv-name" placeholder="Nome Oggetto*" required>
+            
+            <div id="inv-qty-container" style="display:flex; gap:10px;">
+                <input type="number" id="inv-qty" placeholder="Quantità" value="1" min="1" style="flex:1;">
+            </div>
+            
+            <input type="text" id="inv-desc" placeholder="Descrizione o Effetto (Opzionale)">
+            
+            <div id="inv-weapon-fields" style="display:none;">
+                <input type="text" id="inv-atk" placeholder="Bonus Attacco (es. +7)">
+                <input type="text" id="inv-dmg" placeholder="Danno (es. 1d4+4)">
+            </div>
+            
+            <div id="inv-potion-fields" style="display:none;">
+                <input type="text" id="inv-heal" placeholder="Formula Cura (es. 2d4+2)">
+            </div>
+            
+            <button onclick="addInventoryItem()">Aggiungi allo Zaino</button>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top: 0;">Portamonete</h3>
+            <div class="currency-grid">
+                <div class="currency-box"><span style="color:#ffd700;">Oro (MO)</span><input type="number" id="coin-gold" value="0" onchange="updateCurrency()"></div>
+                <div class="currency-box"><span style="color:#c0c0c0;">Argento (MA)</span><input type="number" id="coin-silver" value="0" onchange="updateCurrency()"></div>
+                <div class="currency-box"><span style="color:#cd7f32;">Rame (MR)</span><input type="number" id="coin-copper" value="0" onchange="updateCurrency()"></div>
+            </div>
+        </div>
+
+        <div id="inventory-container"></div>
+    </div>
+
+    <!-- 6. DADI -->
+    <div id="sec-dadi" class="section">
+        <div class="card">
+            <div class="display-screen">
+                <span style="font-size: 12px; color: var(--text-muted);" id="dice-label">Lancia un dado</span>
+                <h2 id="dice-result">--</h2>
+            </div>
+            <div class="dice-grid">
+                <button class="dice-btn" onclick="rollSimpleDice(4)">d4</button>
+                <button class="dice-btn" onclick="rollSimpleDice(6)">d6</button>
+                <button class="dice-btn" onclick="rollSimpleDice(8)">d8</button>
+                <button class="dice-btn" onclick="rollSimpleDice(10)">d10</button>
+                <button class="dice-btn" onclick="rollSimpleDice(12)">d12</button>
+                <button class="dice-btn" onclick="rollSimpleDice(20)">d20</button>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Cronologia Lanci</h3>
+            <ul id="dice-log"><li>Nessun lancio effettuato.</li></ul>
+        </div>
+    </div>
+
+    <!-- 7. NOTE -->
+    <div id="sec-note" class="section">
+        <div class="card">
+            <h3 style="margin-top: 0;">Appunti di Sessione</h3>
+            <textarea id="session-notes" oninput="saveData()" style="width: 100%; height: 350px; background: #2c2c2c; color: white; border: 1px solid #444; padding: 12px; border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 14px; resize: vertical;" placeholder="Scrivi qui cosa succede al tavolo..."></textarea>
+            
+            <button class="reset-btn" style="color:var(--secondary-color); border-color:var(--secondary-color);" onclick="exportPDF()">🖨️ Esporta "Eladan_Scheda.pdf" Compilata</button>
+            <button class="reset-btn" style="color:var(--danger-color);" onclick="resetData()">🗑️ Resetta Dati Salvati</button>
+        </div>
+    </div>
+
+    <!-- STRUTTURA NASCOSTA PER ESPORTAZIONE PDF -->
+    <div id="pdf-export-template">
+        <div class="pdf-header">
+            <h1 id="pdf-name">Eladan</h1>
+            <p><span id="pdf-class">Fighter</span> | Livello <span id="pdf-level">5</span> | <span id="pdf-species">Wood Elf</span></p>
+        </div>
+        
+        <div class="pdf-grid-3">
+            <div class="pdf-box">
+                <h3>Caratteristiche & TS</h3>
+                <div class="pdf-list" id="pdf-stats"></div>
+            </div>
+            
+            <div class="pdf-box">
+                <h3>Combattimento & Punti Ferita</h3>
+                <div class="pdf-list">
+                    <div><strong>Punti Ferita:</strong> <span id="pdf-hp"></span></div>
+                    <div><strong>Classe Armatura:</strong> <span id="pdf-ac"></span></div>
+                    <div><strong>Iniziativa:</strong> <span id="pdf-init"></span></div>
+                    <div><strong>Velocità:</strong> 10.5m</div>
+                    <div><strong>Bonus Competenza:</strong> +3</div>
+                </div>
+                <h3 style="margin-top:15px;">Denari</h3>
+                <div class="pdf-list" id="pdf-coins"></div>
+            </div>
+
+            <div class="pdf-box">
+                <h3>Abilità</h3>
+                <div class="pdf-list" id="pdf-skills"></div>
+            </div>
+        </div>
+
+        <div class="pdf-grid-3" style="grid-template-columns: 1fr 1fr;">
+            <div class="pdf-box">
+                <h3>Incantesimi & Stirpe</h3>
+                <div class="pdf-list">
+                    <div><strong>CD Salvezza:</strong> <span id="pdf-dc"></span></div>
+                    <div><strong>Bonus Attacco Inc.:</strong> <span id="pdf-spellatk"></span></div>
+                </div>
+                <div class="pdf-list" id="pdf-spells" style="margin-top:10px;"></div>
+            </div>
+
+            <div class="pdf-box">
+                <h3>Armi & Privilegi</h3>
+                <div class="pdf-list" id="pdf-attacks"></div>
+                <h3 style="margin-top:15px;">Privilegi Classe</h3>
+                <div class="pdf-list" id="pdf-features"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MENU DI NAVIGAZIONE -->
+    <nav>
+        <button onclick="switchTab('sec-scheda')" id="btn-sec-scheda" class="active"><i>👤</i>Scheda</button>
+        <button onclick="switchTab('sec-battaglia')" id="btn-sec-battaglia"><i>⚔️</i>Combatti</button>
+        <button onclick="switchTab('sec-incantesimi')" id="btn-sec-incantesimi"><i>✨</i>Spells</button>
+        <button onclick="switchTab('sec-tratti')" id="btn-sec-tratti"><i>🌟</i>Tratti</button>
+        <button onclick="switchTab('sec-inventario')" id="btn-sec-inventario"><i>🎒</i>Zaino</button>
+        <button onclick="switchTab('sec-dadi')" id="btn-sec-dadi"><i>🎲</i>Dadi</button>
+        <button onclick="switchTab('sec-note')" id="btn-sec-note"><i>📝</i>Note</button>
+    </nav>
+
+    <script>
+        // ==========================================
+        // DATABASE PERSONAGGIO BASE - ELADAN (D&D 2024)
+        // ==========================================
+        let characterData = {
+            name: "Eladan",
+            species: "Wood Elf (Elfo dei Boschi)",
+            class: "Fighter (Guerriero)",
+            level: 5,
+            ac: 15,
+            hpMax: 44,
+            hpCurrent: 44,
+            initiative: "+2",
+            spellDC: 12, // 8 + 3 (prof) + 1 (SAG)
+            spellAtk: "+4", // 3 (prof) + 1 (SAG)
+            sorceryPoints: 2, // Usi di Second Wind
+            inspiration: false, 
+            
+            stats: { FOR: "+2", DES: "+2", COS: "+2", INT: "+0", SAG: "+1", CAR: "+0" },
+            savingThrows: { 
+                FOR: "<span style='color:var(--secondary-color)'>+5 (Prof)</span>", 
+                DES: "+2", 
+                COS: "<span style='color:var(--secondary-color)'>+5 (Prof)</span>", 
+                INT: "+0", 
+                SAG: "+1", 
+                CAR: "+0" 
+            },
+            
+            skills: {
+                Acrobazia: { attr: "DES", mod: "+2" },
+                "Addestrare Animali": { attr: "SAG", mod: "+1" },
+                Arcano: { attr: "INT", mod: "+0" },
+                Atletica: { attr: "FOR", mod: "+5" },
+                Furtività: { attr: "DES", mod: "+5" },
+                Inganno: { attr: "CAR", mod: "+0" },
+                Indagare: { attr: "INT", mod: "+0" },
+                Intimidire: { attr: "CAR", mod: "+3" },
+                Intrattenere: { attr: "CAR", mod: "+0" },
+                Intuizione: { attr: "SAG", mod: "+1" },
+                Medicina: { attr: "SAG", mod: "+1" },
+                Natura: { attr: "INT", mod: "+0" },
+                Percezione: { attr: "SAG", mod: "+4" },
+                Persuasione: { attr: "CAR", mod: "+0" },
+                "Rapidità di Mano": { attr: "DES", mod: "+2" },
+                Religione: { attr: "INT", mod: "+0" },
+                Sopravvivenza: { attr: "SAG", mod: "+4" },
+                Storia: { attr: "INT", mod: "+0" }
+            },
+
+            hitDiceUsed: 0,
+            currency: { gold: 10, silver: 0, copper: 0 },
+
+            battleAttacks: [
+                { name: "Arco", atk: "+7", dmg: "1d8+2", type: "Perforante" },
+                { name: "Spada", atk: "+5", dmg: "1d8+2", type: "Tagliente" }
+            ],
+
+            features: [
+                { name: "Fighting Style: Archery", desc: "+2 ai Tiri per Colpire effettuati con armi a distanza (incluso nelle statistiche dell'Arco)." },
+                { name: "Second Wind (Recupero Energie)", desc: "Azione Bonus. Recuperi 1d10 + 5 Punti Ferita. Puoi usarlo 2 volte per riposo breve/lungo." },
+                { name: "Action Surge (Slancio d'Azione)", desc: "Nel tuo turno puoi effettuare 1 Azione aggiuntiva (1 uso per riposo breve/lungo)." },
+                { name: "Tactical Mind (Mente Tattica 2024)", desc: "Se fallisci una prova di abilità, puoi spendere 1 uso di Second Wind e sommare 1d10 al risultato." },
+                { name: "Extra Attack (Attacco Extra)", desc: "Puoi attaccare due volte invece di una ogni volta che effettui l'azione di Attacco." },
+                { name: "Weapon Mastery (Maestria nelle Armi)", desc: "Utilizzi le proprietà di maestria delle armi designate." },
+                { name: "Tratti Elfo dei Boschi (Wood Elf)", desc: "Scurovisione 18m, Sensi Acuti, Lignaggio Fatato (Vantaggio sui TS contro Affascinato, immunità al sonno magico), Trance (Riposo Lungo in 4 ore), Velocità 10.5m." }
+            ],
+            
+            spellSlots: { 
+                1: [false], 2: [false] 
+            },
+
+            spells: [
+                {
+                    levelId: 0, level: "Trucchetti (Magia Elfica)",
+                    items: [
+                        { name: "Druidcraft", dmg: "-", range: "9m", comp: "V, S", desc: "Crea un piccolo effetto naturale, predice il tempo per 24h o fa fiorire un bocciolo." }
+                    ]
+                },
+                {
+                    levelId: 1, level: "Livello 1 (Stirpe Elfica - 1/Giorno)",
+                    items: [
+                        { name: "Longstrider", dmg: "-", range: "Contatto", comp: "V, S, M", desc: "Aumenta la velocità del bersaglio di +3m per 1 ora." }
+                    ]
+                },
+                {
+                    levelId: 2, level: "Livello 2 (Stirpe Elfica - 1/Giorno)",
+                    items: [
+                        { name: "Pass Without Trace", dmg: "-", range: "Personale", comp: "V, S, M", desc: "+10 alle prove di Furtività per te e gli alleati entro 9m. (Concentrazione)" }
+                    ]
+                }
+            ],
+            
+            inventory: [
+                { type: "weapon", name: "Arco Lungo", desc: "Arma a distanza con Fighting Style Archery (+2 TxC).", atk: "+7", dmg: "1d8+2", qty: 1 },
+                { type: "weapon", name: "Spada Versatile", desc: "Arma da mischia (1d8+2 una mano / 1d10+2 due mani).", atk: "+5", dmg: "1d8+2", qty: 1 },
+                { type: "potion", name: "Pozione di Guarigione", desc: "Recupera Punti Ferita.", heal: "2d4+2", qty: 2 },
+                { type: "item", name: "Faretra con Frecce", desc: "20 Frecce per Arco Lungo.", qty: 1 }
+            ]
+        };
+
+        // ==========================================
+        // SISTEMA DI SALVATAGGIO (LOCAL STORAGE)
+        // ==========================================
+        const storageKey = 'dnd_save_' + characterData.name.replace(/\s+/g, '_');
+
+        function loadSavedData() {
+            const saved = localStorage.getItem(storageKey);
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (parsed.hpCurrent !== undefined) characterData.hpCurrent = parsed.hpCurrent;
+                if (parsed.inventory) characterData.inventory = parsed.inventory;
+                if (parsed.inspiration !== undefined) characterData.inspiration = parsed.inspiration;
+                if (parsed.spellSlots) characterData.spellSlots = parsed.spellSlots;
+                if (parsed.hitDiceUsed !== undefined) characterData.hitDiceUsed = parsed.hitDiceUsed;
+                if (parsed.currency) characterData.currency = parsed.currency;
+                if (parsed.notes) document.getElementById('session-notes').value = parsed.notes;
+            }
+        }
+
+        function saveData() {
+            const dataToSave = {
+                hpCurrent: characterData.hpCurrent,
+                inventory: characterData.inventory,
+                inspiration: characterData.inspiration,
+                spellSlots: characterData.spellSlots,
+                hitDiceUsed: characterData.hitDiceUsed,
+                currency: characterData.currency,
+                notes: document.getElementById('session-notes').value
+            };
+            localStorage.setItem(storageKey, JSON.stringify(dataToSave));
+        }
+
+        function resetData() {
+            if(confirm("Sei sicuro di voler resettare tutti i dati salvati di Eladan?")) {
+                localStorage.removeItem(storageKey);
+                location.reload(); 
+            }
+        }
+
+        // ==========================================
+        // LOGICA INTERFACCIA E RIPOSI
+        // ==========================================
+        let lastAttackWasCrit = false;
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.getElementById('btn-' + tabId).classList.add('active');
+        }
+
+        function toggleInspiration() {
+            characterData.inspiration = !characterData.inspiration;
+            saveData(); 
+            loadCharacter(); 
+        }
+
+        function toggleSpellSlot(level, index) {
+            characterData.spellSlots[level][index] = !characterData.spellSlots[level][index];
+            saveData(); loadCharacter(); 
+        }
+
+        function levelUp() { characterData.level++; saveData(); loadCharacter(); }
+
+        function changeHP(amount) {
+            characterData.hpCurrent += amount;
+            if (characterData.hpCurrent > characterData.hpMax) characterData.hpCurrent = characterData.hpMax;
+            if (characterData.hpCurrent < 0) characterData.hpCurrent = 0;
+            document.querySelectorAll('.char-hp-current-display').forEach(el => el.innerText = characterData.hpCurrent);
+            saveData(); 
+        }
+
+        function updateCurrency() {
+            characterData.currency.gold = parseInt(document.getElementById('coin-gold').value) || 0;
+            characterData.currency.silver = parseInt(document.getElementById('coin-silver').value) || 0;
+            characterData.currency.copper = parseInt(document.getElementById('coin-copper').value) || 0;
+            saveData();
+        }
+
+        function shortRest() {
+            let available = characterData.level - characterData.hitDiceUsed;
+            if(available <= 0) { updateScreen("scheda", "Riposo Fallito", "--", "Nessun dado d10 disponibile"); return; }
+            let input = prompt(`Quanti Dadi Vita (d10) vuoi usare? (Disponibili: ${available})`, "1");
+            if(!input) return;
+            let numDice = parseInt(input);
+            if(isNaN(numDice) || numDice < 1 || numDice > available) return;
+
+            let conMod = parseInt(characterData.stats.COS.replace('+', '')); 
+            let totalHeal = 0, rollDetails = [];
+            for(let i=0; i<numDice; i++) {
+                let r = Math.floor(Math.random() * 10) + 1; // Guerriero = d10
+                totalHeal += r + conMod;
+                rollDetails.push(r);
+            }
+            characterData.hitDiceUsed += numDice;
+            changeHP(totalHeal);
+            
+            logDice(`☕ Riposo Breve`, totalHeal, `Dadi d10: ${rollDetails.join(', ')}`, "var(--secondary-color)");
+            updateScreen("scheda", "Cura Riposo", totalHeal, `Recuperati HP`);
+            loadCharacter(); 
+        }
+
+        function longRest() {
+            if(confirm("Vuoi fare un Riposo Lungo?\nRecupererai tutti gli HP (44), i Dadi Vita e gli usi degli Incantesimi di Stirpe!")) {
+                characterData.hpCurrent = characterData.hpMax;
+                characterData.hitDiceUsed = 0; 
+                for (let level in characterData.spellSlots) {
+                    for(let i=0; i<characterData.spellSlots[level].length; i++) characterData.spellSlots[level][i] = false;
+                }
+                saveData(); loadCharacter();
+                updateScreen("scheda", "Riposo Lungo", "MAX", "Tutto ripristinato");
+            }
+        }
+
+        // ==========================================
+        // TIRI (STATISTICHE E SCHERMI)
+        // ==========================================
+        let rollHistory = [];
+
+        function parseAndRollString(diceString, doubleDice = false) {
+            let total = 0, logs = [];
+            const match = diceString.match(/(\d+)d(\d+)(?:\s*([+-])\s*(\d+))?/);
+            if (match) {
+                let diceCount = parseInt(match[1]);
+                if (doubleDice) diceCount *= 2; 
+                for (let i = 0; i < diceCount; i++) {
+                    const r = Math.floor(Math.random() * parseInt(match[2])) + 1;
+                    total += r; logs.push(r);
+                }
+                if (match[3] && match[4]) {
+                    const flat = parseInt(match[4]);
+                    if (match[3] === '+') total += flat; else total -= flat;
+                    logs.push(match[3] + flat);
+                }
+            } else {
+                total = parseInt(diceString) || 0;
+                if(doubleDice) total *= 2; 
+                logs.push(total);
+            }
+            return { total, logs: logs.join(' ') };
+        }
+
+        function updateScreen(target, label, value, subtext, critClass="") {
+            document.getElementById(`${target}-result-label`).innerText = label;
+            document.getElementById(`${target}-result-value`).innerText = value;
+            document.getElementById(`${target}-result-crit`).innerHTML = critClass ? `<span class="${critClass}">${subtext}</span>` : subtext;
+        }
+
+        function logDice(title, result, subtext, color="var(--primary-color)") {
+            const time = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+            let logMsg = `<strong style="color: ${color}">${title}</strong><br>Risultato: <b style="font-size:18px;">${result}</b> <span style="font-size:11px; color:#777;">(${subtext})</span><div style="color:#777; font-size:11px; margin-top:3px; text-align:right;">${time}</div>`;
+            rollHistory.unshift(logMsg);
+            if (rollHistory.length > 10) rollHistory.pop();
+            document.getElementById('dice-log').innerHTML = rollHistory.map(log => `<li>${log}</li>`).join('');
+        }
+
+        function rollStat(name, modStr) {
+            const mod = parseInt(modStr.replace('+', '')) || 0;
+            const d20 = Math.floor(Math.random() * 20) + 1;
+            const total = d20 + mod;
+            let critClass = "";
+            let screenSub = `d20: ${d20} + ${mod}`;
+
+            if (d20 === 20) { critClass = "crit-text"; screenSub += " (SUCCESSO CRITICO!)"; }
+            if (d20 === 1) { critClass = "crit-text"; screenSub += " (FALLIMENTO CRITICO!)"; document.getElementById('scheda-result-crit').style.color = "var(--danger-color)"; } 
+            else { document.getElementById('scheda-result-crit').style.color = "#ffd700"; }
+
+            logDice(`🎲 ${name}`, total, screenSub, "var(--text-color)");
+            updateScreen("scheda", `Tiro: ${name}`, total, screenSub, critClass);
+        }
+
+        function rollAttack(isInv, index) {
+            const atkData = isInv ? characterData.inventory[index] : characterData.battleAttacks[index];
+            const mod = parseInt((atkData.atk || "+0").replace('+', '')) || 0;
+            const d20 = Math.floor(Math.random() * 20) + 1;
+            const total = d20 + mod;
+
+            lastAttackWasCrit = (d20 === 20);
+            let critClass = "", screenSub = `d20: ${d20} + ${mod}`;
+            document.getElementById('battle-result-crit').style.color = "#ffd700";
+
+            if (d20 === 20) { critClass = "crit-text"; screenSub = "CRITICO! (Danni raddoppiati in memoria)"; }
+            if (d20 === 1) { critClass = "crit-text"; screenSub = "FALLIMENTO CRITICO!"; document.getElementById('battle-result-crit').style.color = "var(--danger-color)"; }
+
+            logDice(`🎯 ${atkData.name} (TxC)`, total, screenSub);
+            updateScreen("battle", `TxC: ${atkData.name}`, total, screenSub, critClass);
+        }
+
+        function rollDamage(isInv, index) {
+            const atkData = isInv ? characterData.inventory[index] : characterData.battleAttacks[index];
+            const dmgResult = parseAndRollString(atkData.dmg || "0", lastAttackWasCrit);
+            let critNotice = lastAttackWasCrit ? "CRITICO APPLICATO!" : `Danno normale`;
+            
+            logDice(`💥 ${atkData.name} (Danno)`, dmgResult.total, `${dmgResult.logs} | ${atkData.type||''}`, "var(--danger-color)");
+            updateScreen("battle", `Danno: ${atkData.name}`, dmgResult.total, critNotice, lastAttackWasCrit ? 'crit-text' : '');
+            lastAttackWasCrit = false; 
+        }
+
+        function rollSimpleDice(sides) {
+            const result = Math.floor(Math.random() * sides) + 1;
+            document.getElementById('dice-result').innerText = result;
+            logDice(`🎲 d${sides}`, result, `Tiro base`, "var(--text-color)");
+        }
+
+        // ==========================================
+        // INVENTARIO
+        // ==========================================
+        function toggleInvForm() {
+            const t = document.getElementById('inv-type').value;
+            document.getElementById('inv-weapon-fields').style.display = (t === 'weapon') ? 'block' : 'none';
+            document.getElementById('inv-potion-fields').style.display = (t === 'potion') ? 'block' : 'none';
+        }
+        function addInventoryItem() {
+            const name = document.getElementById('inv-name').value;
+            if (!name) return;
+            const type = document.getElementById('inv-type').value;
+            const newItem = { name, type, desc: document.getElementById('inv-desc').value, qty: parseInt(document.getElementById('inv-qty').value) || 1 };
+            if (type === 'weapon') { newItem.atk = document.getElementById('inv-atk').value; newItem.dmg = document.getElementById('inv-dmg').value; } 
+            else if (type === 'potion') { newItem.heal = document.getElementById('inv-heal').value; }
+            characterData.inventory.push(newItem);
+            document.querySelectorAll('.inv-form input[type=text], .inv-form input[type=number]').forEach(el => el.value = (el.id==='inv-qty')?'1':'');
+            saveData(); loadCharacter(); 
+        }
+        function usePotion(index) {
+            const pot = characterData.inventory[index];
+            if(!pot || pot.qty <= 0) return;
+            let total = parseAndRollString(pot.heal || "0").total;
+            changeHP(total);
+            pot.qty--; if(pot.qty <= 0) characterData.inventory.splice(index, 1);
+            logDice(`🧪 ${pot.name}`, total, `Cura HP`, "var(--secondary-color)");
+            updateScreen("battle", `Usata: ${pot.name}`, total, "HP Recuperati");
+            saveData(); loadCharacter();
+        }
+
+        // ==========================================
+        // ESPORTAZIONE PDF
+        // ==========================================
+        function exportPDF() {
+            document.getElementById('pdf-name').innerText = characterData.name;
+            document.getElementById('pdf-class').innerText = characterData.class;
+            document.getElementById('pdf-level').innerText = characterData.level;
+            document.getElementById('pdf-species').innerText = characterData.species;
+            
+            document.getElementById('pdf-hp').innerText = characterData.hpCurrent + " / " + characterData.hpMax;
+            document.getElementById('pdf-ac').innerText = characterData.ac;
+            document.getElementById('pdf-init').innerText = characterData.initiative;
+            document.getElementById('pdf-dc').innerText = characterData.spellDC;
+            document.getElementById('pdf-spellatk').innerText = characterData.spellAtk;
+
+            document.getElementById('pdf-stats').innerHTML = Object.entries(characterData.stats).map(([k,v]) => `<div><strong>${k}:</strong> ${v}</div>`).join('');
+            document.getElementById('pdf-skills').innerHTML = Object.entries(characterData.skills).map(([k,v]) => `<div>${k} (${v.attr}): <strong>${v.mod}</strong></div>`).join('');
+            
+            let allAttacks = [...characterData.battleAttacks, ...characterData.inventory.filter(i => i.atk || i.dmg)];
+            document.getElementById('pdf-attacks').innerHTML = allAttacks.map(a => `<div><strong>${a.name}</strong> - TxC: ${a.atk||'+0'} | Danno: ${a.dmg||'-'}</div>`).join('');
+            
+            document.getElementById('pdf-features').innerHTML = characterData.features.map(f => `<div><strong>${f.name}</strong></div>`).join('');
+            
+            let spellList = "";
+            characterData.spells.forEach(group => {
+                spellList += `<div style="margin-top:10px;"><strong>-- ${group.level} --</strong></div>`;
+                group.items.forEach(s => spellList += `<div>${s.name} (Raggio: ${s.range})</div>`);
+            });
+            document.getElementById('pdf-spells').innerHTML = spellList;
+            
+            document.getElementById('pdf-coins').innerHTML = `<div>Oro: ${characterData.currency.gold} | Argento: ${characterData.currency.silver} | Rame: ${characterData.currency.copper}</div>`;
+
+            const element = document.getElementById('pdf-export-template');
+            element.style.display = 'block';
+            
+            const opt = {
+                margin: 10,
+                filename: `${characterData.name.replace(/\s+/g, '_')}_Scheda.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.style.display = 'none';
+            });
+        }
+
+        // ==========================================
+        // INIZIALIZZAZIONE E RENDERING VISUALI
+        // ==========================================
+        function loadCharacter() {
+            loadSavedData(); 
+            document.getElementById('char-name').innerText = characterData.name;
+            document.getElementById('char-subtitle').innerText = `${characterData.class} | ${characterData.species}`;
+            document.getElementById('char-level').innerText = characterData.level;
+            
+            const inspIcon = document.getElementById('insp-icon');
+            const inspCont = document.getElementById('insp-container');
+            if (characterData.inspiration) { 
+                inspIcon.classList.add('active'); inspCont.classList.add('active');
+            } else { 
+                inspIcon.classList.remove('active'); inspCont.classList.remove('active');
+            }
+
+            document.querySelectorAll('.char-hp-current-display').forEach(el => el.innerText = characterData.hpCurrent);
+            document.querySelectorAll('.char-hp-max-display').forEach(el => el.innerText = characterData.hpMax);
+            document.getElementById('char-ac').innerText = characterData.ac;
+            document.getElementById('char-init').innerText = characterData.initiative;
+            document.getElementById('char-dc').innerText = characterData.spellDC;
+            document.getElementById('char-spell-atk').innerText = characterData.spellAtk;
+            document.getElementById('char-sp').innerText = characterData.sorceryPoints;
+
+            document.getElementById('coin-gold').value = characterData.currency.gold;
+            document.getElementById('coin-silver').value = characterData.currency.silver;
+            document.getElementById('coin-copper').value = characterData.currency.copper;
+
+            document.getElementById('stats-container').innerHTML = Object.entries(characterData.stats).map(([s, v]) => `<div class="stat-box" onclick="rollStat('${s}', '${v}')"><span>${s}</span><strong>${v}</strong></div>`).join('');
+            document.getElementById('saves-container').innerHTML = Object.entries(characterData.savingThrows).map(([s, v]) => `<div class="stat-box" onclick="rollStat('TS ${s}', '${v.replace(/<[^>]*>?/gm, '')}')"><span>${s}</span><strong>${v}</strong></div>`).join('');
+            document.getElementById('skills-container').innerHTML = Object.entries(characterData.skills).map(([name, data]) => `<div class="skill-btn" onclick="rollStat('${name}', '${data.mod}')"><span class="name">${name} <span style="font-weight:normal; color:#777;">(${data.attr})</span></span><span class="mod">${data.mod}</span></div>`).join('');
+
+            let hdHtml = '<span style="font-size: 12px; color: var(--text-muted); margin-right: 10px;">DADI VITA:</span>';
+            for(let i=0; i<characterData.level; i++) hdHtml += `<span class="hd-icon ${i < (characterData.level - characterData.hitDiceUsed) ? 'available' : ''}">🎲</span>`;
+            document.getElementById('hd-container').innerHTML = hdHtml;
+
+            let baseAttacksHtml = characterData.battleAttacks.length > 0 ? characterData.battleAttacks.map((atk, i) => `<div class="attack-card"><div class="attack-header"><span class="attack-name">⚔️ ${atk.name}</span><span class="attack-stats">TxC: ${atk.atk} | Danni: ${atk.dmg}</span></div><div class="attack-actions"><button class="action-btn btn-hit" onclick="rollAttack(false, ${i})">🎯 Colpire</button><button class="action-btn btn-dmg" onclick="rollDamage(false, ${i})">💥 Danno</button></div></div>`).join('') : '';
+            let invAtkHtml = "", invPotHtml = "", hasPot = false, hasAtk = baseAttacksHtml !== '';
+            
+            characterData.inventory.forEach((item, i) => {
+                if (item.type === 'weapon' || item.atk || item.dmg) {
+                    hasAtk = true;
+                    invAtkHtml += `<div class="attack-card" style="border-color: var(--secondary-color);"><div class="attack-header"><span class="attack-name">🎒 ${item.name}</span><span class="attack-stats">TxC: ${item.atk||'+0'} | Danni: ${item.dmg||'0'}</span></div><div class="attack-actions"><button class="action-btn btn-hit" onclick="rollAttack(true, ${i})">🎯 Colpire</button><button class="action-btn btn-dmg" onclick="rollDamage(true, ${i})">💥 Danno</button></div></div>`;
+                } else if (item.type === 'potion') {
+                    hasPot = true;
+                    invPotHtml += `<div class="attack-card" style="border-color: var(--secondary-color);"><div class="attack-header"><span class="attack-name">🧪 ${item.name} <span style="background:var(--secondary-color); color:#000; padding:2px 6px; border-radius:12px; font-size:10px;">x${item.qty}</span></span><span class="attack-stats">Cura: ${item.heal||'0'}</span></div><div class="attack-actions"><button class="action-btn btn-heal" onclick="usePotion(${i})">💊 Bevi Pozione</button></div></div>`;
+                }
+            });
+            
+            if (!hasAtk) {
+                document.getElementById('battle-attacks-container').innerHTML = `<p style="color:var(--text-muted); font-size:12px; text-align:center;">Nessun attacco registrato.</p>`;
+            } else {
+                document.getElementById('battle-attacks-container').innerHTML = baseAttacksHtml + invAtkHtml;
+            }
+            
+            document.getElementById('battle-potions-list').innerHTML = invPotHtml;
+            document.getElementById('battle-potions-container').style.display = hasPot ? 'block' : 'none';
+
+            if (characterData.inventory.length === 0) {
+                document.getElementById('inventory-container').innerHTML = `<p style="color:var(--text-muted); font-size:12px; text-align:center;">Zaino vuoto.</p>`;
+            } else {
+                document.getElementById('inventory-container').innerHTML = characterData.inventory.map((item, i) => {
+                    let badge = item.type === 'weapon' ? '⚔️' : (item.type === 'potion' ? '🧪' : '🎒');
+                    let useBtn = item.type === 'potion' ? `<button onclick="usePotion(${i})" style="background:var(--secondary-color); color:#000; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; cursor:pointer; margin-top:5px;">Usa (Rimaste: ${item.qty})</button>` : '';
+                    return `<details><summary>${badge} ${item.name} ${item.qty > 1 ? `x${item.qty}` : ''}</summary><div class="details-content">${item.atk ? `<strong>Attacco:</strong> ${item.atk}<br>` : ''}${item.dmg ? `<strong>Danno:</strong> ${item.dmg}<br>` : ''}${item.heal ? `<strong>Cura:</strong> ${item.heal}<br>` : ''}${item.desc ? `<em>${item.desc}</em><br>` : ''}${useBtn}</div></details>`;
+                }).join('');
+            }
+
+            if (characterData.features.length === 0) {
+                document.getElementById('features-container').innerHTML = `<p style="color:var(--text-muted); font-size:12px; text-align:center;">Nessun privilegio di classe registrato.</p>`;
+            } else {
+                document.getElementById('features-container').innerHTML = characterData.features.map(f => `<details><summary>${f.name} <span>+</span></summary><div class="details-content">${f.desc}</div></details>`).join('');
+            }
+            
+            let spellRender = characterData.spells.map(g => {
+                if (g.items.length === 0) return '';
+                let slotsHtml = (g.levelId > 0 && characterData.spellSlots[g.levelId]) ? `<div class="slot-container"><span style="font-size:12px; color:var(--text-muted); width:75px;">Usi/Slot:</span>` + characterData.spellSlots[g.levelId].map((used, idx) => `<div class="slot-dot ${used ? 'used' : ''}" onclick="toggleSpellSlot(${g.levelId}, ${idx})"></div>`).join('') + `</div>` : '';
+                return `<div class="spell-level">${g.level}</div>${slotsHtml}` + g.items.map(s => `<details><summary>${s.name} <span>▼</span></summary><div class="details-content"><div class="spell-tags"><span>🎯 ${s.range}</span><span>💥 ${s.dmg}</span><span>🗣️ ${s.comp}</span></div><p style="margin-top:10px;">${s.desc}</p></div></details>`).join('');
+            }).join('');
+            
+            document.getElementById('spells-container').innerHTML = spellRender || `<p style="color:var(--text-muted); font-size:12px; text-align:center;">Nessun incantesimo registrato.</p>`;
+        }
+
+        window.onload = loadCharacter;
+    </script>
+</body>
+</html>
