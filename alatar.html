@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scheda Personaggio NFC</title>
+    <title>Scheda Personaggio NFC - Alatar</title>
+    <!-- Libreria per l'esportazione PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
             --bg-color: #121212;
@@ -28,7 +30,8 @@
         /* HEADER & ISPIRAZIONE */
         header { background-color: var(--surface-color); padding: 20px; text-align: center; border-bottom: 1px solid #333; }
         header h1 { margin: 0; font-size: 24px; color: var(--primary-color); display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
-        .inspiration-container { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-muted); background: #2c2c2c; padding: 4px 8px; border-radius: 20px; cursor: pointer; }
+        .inspiration-container { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-muted); background: #2c2c2c; padding: 4px 8px; border-radius: 20px; cursor: pointer; border: 1px solid transparent; transition: all 0.3s; }
+        .inspiration-container.active { border-color: var(--secondary-color); background: rgba(3, 218, 198, 0.1); color: var(--secondary-color); }
         .inspiration-btn { opacity: 0.3; filter: grayscale(100%); transition: all 0.3s; font-size: 16px; }
         .inspiration-btn.active { opacity: 1; filter: grayscale(0%); transform: scale(1.2); }
         .level-up-btn { background-color: var(--secondary-color); color: #000; border: none; border-radius: 4px; padding: 4px 10px; font-size: 12px; font-weight: bold; cursor: pointer; margin-left: 10px; }
@@ -39,11 +42,16 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .card { background-color: var(--surface-color); border-radius: var(--border-radius); padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; margin-bottom: 15px; }
+        .skills-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
         
-        .stat-box { background-color: #2c2c2c; border-radius: 8px; padding: 10px; }
-        .stat-box span { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
-        .stat-box strong { font-size: 20px; }
+        .stat-box, .skill-btn { background-color: #2c2c2c; border-radius: 8px; padding: 10px; cursor: pointer; border: 1px solid #333; transition: transform 0.1s; }
+        .stat-box:active, .skill-btn:active { transform: scale(0.95); border-color: var(--primary-color); }
+        .stat-box span { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; }
+        .stat-box strong { font-size: 18px; }
+        .skill-btn { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; }
+        .skill-btn span.name { font-size: 12px; font-weight: bold; }
+        .skill-btn span.mod { color: var(--primary-color); font-size: 14px; }
         
         /* HP & RIPOSI */
         .hp-controls { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 15px; }
@@ -61,7 +69,13 @@
         .btn-short-rest { background-color: var(--secondary-color); }
         .btn-long-rest { background-color: var(--primary-color); }
 
-        /* BATTAGLIA (CARDS ATTACCO E SCHERMO) */
+        /* DISPLAY SCHERMO (BATTAGLIA E SCHEDA) */
+        .display-screen { text-align: center; padding: 15px; background: #000; border: 2px solid #333; border-radius: 8px; margin-bottom: 15px; }
+        .display-screen span { display: block; font-size: 12px; color: var(--text-muted); }
+        .display-screen h2 { margin: 5px 0 0 0; font-size: 38px; color: var(--text-color); }
+        .display-screen .crit-text { font-size: 14px; color: #ffd700; display: block; margin-top: 5px; min-height: 20px; font-weight: bold; }
+
+        /* BATTAGLIA CARDS */
         .attack-card { background-color: #2c2c2c; border-radius: 8px; padding: 12px; margin-bottom: 10px; border: 1px solid #444; }
         .attack-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .attack-name { font-weight: bold; color: var(--text-color); font-size: 15px; display: flex; align-items: center; gap: 5px; }
@@ -72,11 +86,6 @@
         .btn-hit { background-color: var(--primary-color); color: #000; }
         .btn-dmg { background-color: var(--danger-color); color: #000; }
         .btn-heal { background-color: var(--secondary-color); color: #000; }
-        
-        .battle-display { text-align: center; padding: 15px; background: #000; border: 2px solid #333; border-radius: 8px; margin-bottom: 15px; }
-        .battle-display span { display: block; font-size: 12px; color: var(--text-muted); }
-        .battle-display h2 { margin: 5px 0 0 0; font-size: 38px; color: var(--text-color); }
-        .battle-display .crit-text { font-size: 14px; color: #ffd700; display: block; margin-top: 5px; min-height: 20px; }
 
         /* MENU A TENDINA E INCANTESIMI */
         details { background-color: #2c2c2c; border-radius: 8px; margin-bottom: 10px; padding: 10px; }
@@ -93,21 +102,17 @@
         /* INVENTARIO, MONETE E NOTE */
         .inv-form select, .inv-form input { width: 100%; background: #2c2c2c; border: 1px solid #444; color: white; padding: 10px; margin-bottom: 10px; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
         .inv-form button { width: 100%; background-color: var(--primary-color); color: #000; font-weight: bold; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        .reset-btn { background-color: transparent; color: var(--danger-color); border: 1px solid var(--danger-color); padding: 10px; border-radius: 8px; width: 100%; cursor: pointer; margin-top: 15px; }
+        .reset-btn { background-color: transparent; border: 1px solid var(--danger-color); padding: 10px; border-radius: 8px; width: 100%; cursor: pointer; margin-top: 15px; font-weight: bold; }
         
         .currency-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; margin-top: 10px; }
         .currency-box { background-color: #2c2c2c; padding: 10px; border-radius: 8px; }
         .currency-box span { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; }
         .currency-box input { width: 80%; background: #1e1e1e; border: 1px solid #444; color: white; padding: 5px; text-align: center; border-radius: 4px; font-weight: bold; }
         
-        .potion-qty { background: var(--secondary-color); color: #000; padding: 2px 6px; border-radius: 12px; font-size: 10px; font-weight: bold; }
-
         /* STILI DADI */
         .dice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
         .dice-btn { background-color: #2c2c2c; color: var(--text-color); border: 2px solid #333; border-radius: 8px; padding: 15px 0; font-size: 18px; font-weight: bold; cursor: pointer; }
         .dice-btn:active { background-color: var(--primary-color); color: #fff; transform: scale(0.95); }
-        .dice-result-display { text-align: center; padding: 20px; background-color: #2c2c2c; border-radius: 8px; margin-bottom: 15px; }
-        .dice-result-display h2 { margin: 0; font-size: 48px; color: var(--secondary-color); }
         #dice-log { list-style: none; padding: 0; margin: 0; font-size: 14px; color: var(--text-muted); }
         #dice-log li { padding: 8px 0; border-bottom: 1px dashed #333; }
 
@@ -116,6 +121,16 @@
         nav button { background: none; border: none; color: var(--text-muted); font-size: 10px; font-weight: 600; display: flex; flex-direction: column; align-items: center; padding: 5px 2px; cursor: pointer; flex: 1; }
         nav button.active { color: var(--primary-color); background-color: rgba(187, 134, 252, 0.1); border-radius: 8px; }
         nav button i { font-size: 20px; margin-bottom: 4px; font-style: normal; }
+
+        /* EXPORT PDF HIDDEN TEMPLATE */
+        #pdf-export-template { display: none; background: white; color: black; padding: 40px; font-family: serif; width: 800px; }
+        .pdf-header { text-align: center; border-bottom: 2px solid black; margin-bottom: 20px; padding-bottom: 10px; }
+        .pdf-header h1 { font-size: 32px; margin: 0; text-transform: uppercase; }
+        .pdf-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .pdf-box { border: 1px solid black; padding: 10px; border-radius: 5px; }
+        .pdf-box h3 { font-size: 12px; text-transform: uppercase; margin: 0 0 5px 0; color: #555; }
+        .pdf-list { font-size: 14px; }
+        .pdf-list div { border-bottom: 1px dotted #ccc; padding: 4px 0; }
     </style>
 </head>
 <body>
@@ -123,7 +138,7 @@
     <header>
         <h1>
             <span id="char-name">Nome</span> 
-            <div class="inspiration-container" onclick="toggleInspiration()">
+            <div id="insp-container" class="inspiration-container" onclick="toggleInspiration()">
                 <span id="insp-icon" class="inspiration-btn" title="Ispirazione Eroica">✅</span>
                 <span>Ispirazione Eroica</span>
             </div>
@@ -134,8 +149,15 @@
         </p>
     </header>
 
-    <!-- 1. SCHEDA -->
+    <!-- 1. SCHEDA GENERALE & ABILITÀ -->
     <div id="sec-scheda" class="section active">
+        
+        <div class="display-screen">
+            <span id="scheda-result-label">Seleziona Caratteristica o Abilità</span>
+            <h2 id="scheda-result-value">--</h2>
+            <div class="crit-text" id="scheda-result-crit"></div>
+        </div>
+
         <div class="card" style="text-align: center;">
             <span style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 10px;">PUNTI FERITA ATTUALI / MAX</span>
             <div class="hp-controls">
@@ -155,13 +177,27 @@
         </div>
 
         <div class="stats-grid card">
-            <div class="stat-box"><span>CA</span><strong id="char-ac">10</strong></div>
-            <div class="stat-box"><span>INIZIATIVA</span><strong id="char-init">+0</strong></div>
-            <div class="stat-box"><span>VELOCITÀ</span><strong>9m</strong></div>
+            <div class="stat-box" style="cursor: default;"><span>CA</span><strong id="char-ac">10</strong></div>
+            <div class="stat-box" style="cursor: pointer; border: 1px solid var(--secondary-color);" onclick="rollStat('Iniziativa', characterData.initiative)">
+                <span>INIZIATIVA 🎲</span><strong id="char-init">+0</strong>
+            </div>
+            <div class="stat-box" style="cursor: default;"><span>VELOCITÀ</span><strong>9m</strong></div>
         </div>
         
-        <div class="card"><h3>Caratteristiche</h3><div class="stats-grid" id="stats-container"></div></div>
-        <div class="card"><h3>Tiri Salvezza</h3><div class="stats-grid" id="saves-container"></div></div>
+        <div class="card">
+            <h3 style="margin-top:0;">Caratteristiche (Clicca per tirare)</h3>
+            <div class="stats-grid" id="stats-container"></div>
+        </div>
+        
+        <div class="card">
+            <h3 style="margin-top:0;">Tiri Salvezza (Clicca per tirare)</h3>
+            <div class="stats-grid" id="saves-container"></div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top:0;">Abilità</h3>
+            <div class="skills-grid" id="skills-container"></div>
+        </div>
     </div>
 
     <!-- 2. BATTAGLIA -->
@@ -178,8 +214,8 @@
             </div>
         </div>
 
-        <div class="battle-display">
-            <span id="battle-result-label">Schermo Tiri</span>
+        <div class="display-screen">
+            <span id="battle-result-label">Schermo Tiri Battaglia</span>
             <h2 id="battle-result-value">--</h2>
             <div class="crit-text" id="battle-result-crit"></div>
         </div>
@@ -210,7 +246,7 @@
         <div class="card" id="features-container"></div>
     </div>
 
-    <!-- 5. INVENTARIO E MONETE -->
+    <!-- 5. INVENTARIO -->
     <div id="sec-inventario" class="section">
         <div class="card inv-form">
             <h3>Aggiungi Oggetto</h3>
@@ -221,7 +257,7 @@
             </select>
             <input type="text" id="inv-name" placeholder="Nome Oggetto*" required>
             
-            <div id="inv-qty-container" style="display:none; display:flex; gap:10px;">
+            <div id="inv-qty-container" style="display:flex; gap:10px;">
                 <input type="number" id="inv-qty" placeholder="Quantità" value="1" min="1" style="flex:1;">
             </div>
             
@@ -242,18 +278,9 @@
         <div class="card">
             <h3 style="margin-top: 0;">Portamonete</h3>
             <div class="currency-grid">
-                <div class="currency-box">
-                    <span style="color: #ffd700;">Oro (MO)</span>
-                    <input type="number" id="coin-gold" value="0" onchange="updateCurrency()">
-                </div>
-                <div class="currency-box">
-                    <span style="color: #c0c0c0;">Argento (MA)</span>
-                    <input type="number" id="coin-silver" value="0" onchange="updateCurrency()">
-                </div>
-                <div class="currency-box">
-                    <span style="color: #cd7f32;">Rame (MR)</span>
-                    <input type="number" id="coin-copper" value="0" onchange="updateCurrency()">
-                </div>
+                <div class="currency-box"><span style="color:#ffd700;">Oro (MO)</span><input type="number" id="coin-gold" value="0" onchange="updateCurrency()"></div>
+                <div class="currency-box"><span style="color:#c0c0c0;">Argento (MA)</span><input type="number" id="coin-silver" value="0" onchange="updateCurrency()"></div>
+                <div class="currency-box"><span style="color:#cd7f32;">Rame (MR)</span><input type="number" id="coin-copper" value="0" onchange="updateCurrency()"></div>
             </div>
         </div>
 
@@ -263,17 +290,17 @@
     <!-- 6. DADI -->
     <div id="sec-dadi" class="section">
         <div class="card">
-            <div class="dice-result-display">
+            <div class="display-screen">
                 <span style="font-size: 12px; color: var(--text-muted);" id="dice-label">Lancia un dado</span>
                 <h2 id="dice-result">--</h2>
             </div>
             <div class="dice-grid">
-                <button class="dice-btn" onclick="rollDice(4)">d4</button>
-                <button class="dice-btn" onclick="rollDice(6)">d6</button>
-                <button class="dice-btn" onclick="rollDice(8)">d8</button>
-                <button class="dice-btn" onclick="rollDice(10)">d10</button>
-                <button class="dice-btn" onclick="rollDice(12)">d12</button>
-                <button class="dice-btn" onclick="rollDice(20)">d20</button>
+                <button class="dice-btn" onclick="rollSimpleDice(4)">d4</button>
+                <button class="dice-btn" onclick="rollSimpleDice(6)">d6</button>
+                <button class="dice-btn" onclick="rollSimpleDice(8)">d8</button>
+                <button class="dice-btn" onclick="rollSimpleDice(10)">d10</button>
+                <button class="dice-btn" onclick="rollSimpleDice(12)">d12</button>
+                <button class="dice-btn" onclick="rollSimpleDice(20)">d20</button>
             </div>
         </div>
         <div class="card">
@@ -287,11 +314,64 @@
         <div class="card">
             <h3 style="margin-top: 0;">Appunti di Sessione</h3>
             <textarea id="session-notes" oninput="saveData()" style="width: 100%; height: 350px; background: #2c2c2c; color: white; border: 1px solid #444; padding: 12px; border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 14px; resize: vertical;" placeholder="Scrivi qui cosa succede al tavolo..."></textarea>
-            <button class="reset-btn" onclick="resetData()">Resetta Dati Salvati (Ripristino Completo)</button>
+            
+            <button class="reset-btn" style="color:var(--secondary-color); border-color:var(--secondary-color);" onclick="exportPDF()">🖨️ Esporta "Zzzz Scheda Vuota.pdf" Compilata</button>
+            <button class="reset-btn" style="color:var(--danger-color);" onclick="resetData()">🗑️ Resetta Dati Salvati</button>
         </div>
     </div>
 
-    <!-- MENU DI NAVIGAZIONE A 7 TASTI -->
+    <!-- STRUTTURA NASCOSTA PER ESPORTAZIONE PDF -->
+    <div id="pdf-export-template">
+        <div class="pdf-header">
+            <h1 id="pdf-name">Nome</h1>
+            <p><span id="pdf-class">Classe</span> | Livello <span id="pdf-level">1</span> | <span id="pdf-species">Specie</span></p>
+        </div>
+        
+        <div class="pdf-grid-3">
+            <div class="pdf-box">
+                <h3>Caratteristiche & TS</h3>
+                <div class="pdf-list" id="pdf-stats"></div>
+            </div>
+            
+            <div class="pdf-box">
+                <h3>Combattimento & Punti Ferita</h3>
+                <div class="pdf-list">
+                    <div><strong>Punti Ferita:</strong> <span id="pdf-hp"></span></div>
+                    <div><strong>Classe Armatura:</strong> <span id="pdf-ac"></span></div>
+                    <div><strong>Iniziativa:</strong> <span id="pdf-init"></span></div>
+                    <div><strong>Velocità:</strong> 9m</div>
+                    <div><strong>Bonus Competenza:</strong> +3</div>
+                </div>
+                <h3 style="margin-top:15px;">Denari</h3>
+                <div class="pdf-list" id="pdf-coins"></div>
+            </div>
+
+            <div class="pdf-box">
+                <h3>Abilità</h3>
+                <div class="pdf-list" id="pdf-skills"></div>
+            </div>
+        </div>
+
+        <div class="pdf-grid-3" style="grid-template-columns: 1fr 1fr;">
+            <div class="pdf-box">
+                <h3>Incantesimi & Trucchetti</h3>
+                <div class="pdf-list">
+                    <div><strong>CD Salvezza:</strong> <span id="pdf-dc"></span></div>
+                    <div><strong>Bonus Attacco Inc.:</strong> <span id="pdf-spellatk"></span></div>
+                </div>
+                <div class="pdf-list" id="pdf-spells" style="margin-top:10px;"></div>
+            </div>
+
+            <div class="pdf-box">
+                <h3>Armi & Privilegi</h3>
+                <div class="pdf-list" id="pdf-attacks"></div>
+                <h3 style="margin-top:15px;">Privilegi Classe</h3>
+                <div class="pdf-list" id="pdf-features"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MENU DI NAVIGAZIONE -->
     <nav>
         <button onclick="switchTab('sec-scheda')" id="btn-sec-scheda" class="active"><i>👤</i>Scheda</button>
         <button onclick="switchTab('sec-battaglia')" id="btn-sec-battaglia"><i>⚔️</i>Combatti</button>
@@ -322,24 +402,45 @@
             
             stats: { FOR: "-1", DES: "+2", COS: "+2", INT: "+0", SAG: "+1", CAR: "+4" },
             savingThrows: { 
-                FOR: "-1", DES: "+2", COS: "+2", INT: "+0", SAG: "+1", CAR: "<span style='color:var(--secondary-color)'>+7 (Prof)</span>" 
+                FOR: "-1", DES: "+2", COS: "+2", INT: "+0", SAG: "+1", CAR: "+7" 
             },
             
+            skills: {
+                Acrobazia: { attr: "DES", mod: "+2" },
+                "Addestrare Animali": { attr: "SAG", mod: "+1" },
+                Arcano: { attr: "INT", mod: "+3" },
+                Atletica: { attr: "FOR", mod: "-1" },
+                Furtività: { attr: "DES", mod: "+2" },
+                Inganno: { attr: "CAR", mod: "+7" },
+                Indagare: { attr: "INT", mod: "+0" },
+                Intimidire: { attr: "CAR", mod: "+7" },
+                Intrattenere: { attr: "CAR", mod: "+4" },
+                Intuizione: { attr: "SAG", mod: "+1" },
+                Medicina: { attr: "SAG", mod: "+1" },
+                Natura: { attr: "INT", mod: "+0" },
+                Percezione: { attr: "SAG", mod: "+1" },
+                Persuasione: { attr: "CAR", mod: "+7" },
+                "Rapidità di Mano": { attr: "DES", mod: "+2" },
+                Religione: { attr: "INT", mod: "+0" },
+                Sopravvivenza: { attr: "SAG", mod: "+1" },
+                Storia: { attr: "INT", mod: "+0" }
+            },
+
             hitDiceUsed: 0,
             currency: { gold: 0, silver: 0, copper: 0 },
 
             battleAttacks: [
                 { name: "Sorcerous Burst", atk: "+7", dmg: "1d8", type: "Vario" },
-                { name: "Shocking Grasp", atk: "+7", dmg: "2d8", type: "Fulmine" },
+                { name: "Witch Bolt", atk: "+7", dmg: "1d12", type: "Fulmine" },
                 { name: "Ray of Sickness", atk: "+7", dmg: "2d8", type: "Veleno" }
             ],
 
             features: [
-                { name: "Quicken Spell (2 SP)", desc: "Lanci un incantesimo con tempo di lancio 1 azione come azione bonus." },
-                { name: "Heightened Spell (2 SP)", desc: "Un bersaglio dell'incantesimo ha svantaggio al primo TS contro di esso." },
-                { name: "Innate Sorcery", desc: "Attivi per 1 minuto: hai vantaggio agli attacchi con incantesimo e la CD aumenta di 1." },
-                { name: "Wild Magic Surge", desc: "Lanci d20 dopo un incantesimo di liv 1+. Se esce 1, tira sulla tabella della Magia Selvaggia." },
-                { name: "Alert", desc: "+3 Iniziativa. Puoi scambiare l'iniziativa con un alleato volenteroso." }
+                { name: "Quicken Spell (2 SP)", desc: "Lancio come azione bonus." },
+                { name: "Heightened Spell (2 SP)", desc: "Svantaggio al primo TS del bersaglio." },
+                { name: "Innate Sorcery", desc: "Vantaggio agli attacchi con incantesimo, +1 CD." },
+                { name: "Wild Magic Surge", desc: "Se esce 1 col d20 dopo incantesimo, tira magia selvaggia." },
+                { name: "Alert", desc: "+3 Iniziativa. Scambia iniziativa." }
             ],
 
             spellSlots: { 1: [false, false, false, false], 2: [false, false, false], 3: [false, false] },
@@ -348,37 +449,35 @@
                 {
                     levelId: 0, level: "Trucchetti (Livello 0)",
                     items: [
-                        { name: "Mind Sliver", dmg: "1d6 Psichico", range: "18m", comp: "V", desc: "Il bersaglio sottrae 1d4 dal prossimo TS." },
+                        { name: "Mind Sliver", dmg: "1d6 Psichico", range: "18m", comp: "V", desc: "Sottrae 1d4 dal prossimo TS." },
                         { name: "Sorcerous Burst", dmg: "1d8 Vario", range: "36m", comp: "V, S", desc: "Dado esplosivo se esce 8." },
-                        { name: "Shocking Grasp", dmg: "2d8 Fulmine", range: "Contatto", comp: "V, S", desc: "Vantaggio contro armature di metallo." },
-                        { name: "Minor Illusion", dmg: "-", range: "9m", comp: "S, M", desc: "Crea un'illusione per 1 minuto." },
-                        { name: "Mage Hand", dmg: "-", range: "9m", comp: "V, S", desc: "Crea una mano spettrale." }
+                        { name: "Mage Hand", dmg: "-", range: "9m", comp: "V, S", desc: "Crea una mano spettrale." },
+                        { name: "Minor Illusion", dmg: "-", range: "9m", comp: "S, M", desc: "Crea illusione (suono/immagine)." },
+                        { name: "Shocking Grasp", dmg: "2d8 Fulmine", range: "Contatto", comp: "V, S", desc: "Vantaggio contro metallo." }
                     ]
                 },
                 {
                     levelId: 1, level: "Livello 1",
                     items: [
-                        { name: "Bless", dmg: "-", range: "9m", comp: "V, S, M", desc: "Fino a 3 creature aggiungono 1d4 a Tiri per Colpire e TS. (Concentrazione)" },
-                        { name: "Misty Step", dmg: "-", range: "Personale", comp: "V", desc: "Azione Bonus. Ti teletrasporti fino a 9 metri." },
-                        { name: "Mage Armor", dmg: "-", range: "Contatto", comp: "V, S, M", desc: "La CA del bersaglio diventa 13 + Modificatore Destrezza per 8 ore." },
-                        { name: "Shield", dmg: "-", range: "Personale", comp: "V, S", desc: "Reazione: +5 alla CA e immunità a Dardo Incantato." },
-                        { name: "Ray of Sickness", dmg: "2d8 Veleno", range: "18m", comp: "V, S", desc: "Attacco a distanza. TS Costituzione o avvelenato." }
+                        { name: "Chromatic Orb", dmg: "3d8 Vario", range: "27m", comp: "V, S, M", desc: "Attacco a distanza. Scegli tipo danno." },
+                        { name: "Ray of Sickness", dmg: "2d8 Veleno", range: "18m", comp: "V, S", desc: "Attacco a distanza. TS o avvelenato." },
+                        { name: "Witch Bolt", dmg: "1d12 Fulmine", range: "9m", comp: "V, S, M", desc: "Attacco. Danno continuo ogni turno. (Conc)" },
+                        { name: "Shield", dmg: "-", range: "Personale", comp: "V, S", desc: "Reazione: +5 CA fino al prossimo turno." }
                     ]
                 },
                 {
                     levelId: 2, level: "Livello 2",
                     items: [
-                        { name: "Hold Person", dmg: "-", range: "18m", comp: "V, S, M", desc: "TS Saggezza o paralizzato. (Concentrazione)" },
-                        { name: "Dragon's Breath", dmg: "3d6 Vario", range: "Contatto", comp: "V, S, M", desc: "Sputa energia elementale. (Concentrazione)" },
-                        { name: "Web", dmg: "-", range: "18m", comp: "V, S, M", desc: "Ragnatele in un cubo di 6m. TS Destrezza o intralciato. (Concentrazione)" }
+                        { name: "Hold Person", dmg: "-", range: "18m", comp: "V, S, M", desc: "TS Saggezza o paralizzato. (Conc)" },
+                        { name: "Dragon's Breath", dmg: "3d6 Vario", range: "Contatto", comp: "V, S, M", desc: "Sputa energia. (Conc)" },
+                        { name: "Web", dmg: "-", range: "18m", comp: "V, S, M", desc: "Ragnatele, TS Destrezza. (Conc)" }
                     ]
                 },
                 {
                     levelId: 3, level: "Livello 3",
                     items: [
-                        { name: "Hypnotic Pattern", dmg: "-", range: "36m", comp: "S, M", desc: "TS Saggezza o le creature sono affascinate. (Concentrazione)" },
-                        { name: "Slow", dmg: "-", range: "36m", comp: "V, S, M", desc: "Fino a 6 creature. TS Saggezza o subiscono penalità. (Concentrazione)" },
-                        { name: "Lighting Bolt", dmg: "8d6 Fulmine", range: "Linea 30m", comp: "V, S, M", desc: "TS Destrezza. Danni dimezzati se superato." }
+                        { name: "Hypnotic Pattern", dmg: "-", range: "36m", comp: "S, M", desc: "TS Saggezza o affascinati/inabilitati. (Conc)" },
+                        { name: "Slow", dmg: "-", range: "36m", comp: "V, S, M", desc: "Fino a 6 creature penalizzate. (Conc)" }
                     ]
                 }
             ],
@@ -427,7 +526,7 @@
         // ==========================================
         // LOGICA INTERFACCIA E RIPOSI
         // ==========================================
-        let lastAttackWasCrit = false; // Memoria per il raddoppio danni
+        let lastAttackWasCrit = false;
 
         function switchTab(tabId) {
             document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
@@ -437,8 +536,10 @@
         }
 
         function toggleInspiration() {
+            // INVERTITO L'ORDINE DI SALVATAGGIO PER EVITARE CHE LOADCHARACTER SOVRASCRIVA IL CLICK
             characterData.inspiration = !characterData.inspiration;
-            loadCharacter(); saveData(); 
+            saveData(); 
+            loadCharacter(); 
         }
 
         function toggleSpellSlot(level, index) {
@@ -446,13 +547,12 @@
             saveData(); loadCharacter(); 
         }
 
-        function levelUp() { characterData.level++; loadCharacter(); }
+        function levelUp() { characterData.level++; saveData(); loadCharacter(); }
 
         function changeHP(amount) {
             characterData.hpCurrent += amount;
             if (characterData.hpCurrent > characterData.hpMax) characterData.hpCurrent = characterData.hpMax;
             if (characterData.hpCurrent < 0) characterData.hpCurrent = 0;
-            
             document.querySelectorAll('.char-hp-current-display').forEach(el => el.innerText = characterData.hpCurrent);
             saveData(); 
         }
@@ -466,124 +566,58 @@
 
         function shortRest() {
             let available = characterData.level - characterData.hitDiceUsed;
-            if(available <= 0) { updateBattleDisplay("Riposo Fallito", "--", "Nessun dado disponibile"); return; }
-            
+            if(available <= 0) { updateScreen("scheda", "Riposo Fallito", "--", "Nessun dado"); return; }
             let input = prompt(`Quanti Dadi Vita vuoi usare? (Max: ${available})`, "1");
-            if(input === null || input === "") return;
+            if(!input) return;
             let numDice = parseInt(input);
             if(isNaN(numDice) || numDice < 1 || numDice > available) return;
 
             let conMod = parseInt(characterData.stats.COS.replace('+', '')); 
             let totalHeal = 0, rollDetails = [];
             for(let i=0; i<numDice; i++) {
-                let roll = Math.floor(Math.random() * 6) + 1;
-                totalHeal += roll + conMod;
-                rollDetails.push(roll);
+                let r = Math.floor(Math.random() * 6) + 1;
+                totalHeal += r + conMod;
+                rollDetails.push(r);
             }
-
             characterData.hitDiceUsed += numDice;
             changeHP(totalHeal);
             
-            logDice(`☕ Riposo Breve`, `${totalHeal}`, `Dadi: ${rollDetails.join(', ')}`, "var(--secondary-color)");
-            updateBattleDisplay("Cura Riposo", totalHeal, `Recuperati HP`);
+            logDice(`☕ Riposo Breve`, totalHeal, `Dadi: ${rollDetails.join(', ')}`, "var(--secondary-color)");
+            updateScreen("scheda", "Cura Riposo", totalHeal, `Recuperati HP`);
             loadCharacter(); 
         }
 
         function longRest() {
-            if(confirm("Vuoi fare un Riposo Lungo?\nRecupererai tutti gli HP, i Dadi Vita e gli Slot!")) {
+            if(confirm("Vuoi fare un Riposo Lungo?")) {
                 characterData.hpCurrent = characterData.hpMax;
                 characterData.hitDiceUsed = 0; 
                 for (let level in characterData.spellSlots) {
                     for(let i=0; i<characterData.spellSlots[level].length; i++) characterData.spellSlots[level][i] = false;
                 }
                 saveData(); loadCharacter();
-                updateBattleDisplay("Riposo Lungo", "MAX", "Tutto ripristinato");
+                updateScreen("scheda", "Riposo Lungo", "MAX", "Tutto ripristinato");
             }
         }
 
         // ==========================================
-        // LOGICA INVENTARIO
-        // ==========================================
-        function toggleInvForm() {
-            const type = document.getElementById('inv-type').value;
-            document.getElementById('inv-weapon-fields').style.display = (type === 'weapon') ? 'block' : 'none';
-            document.getElementById('inv-potion-fields').style.display = (type === 'potion') ? 'block' : 'none';
-            document.getElementById('inv-qty-container').style.display = (type === 'potion' || type === 'item') ? 'flex' : 'none';
-        }
-
-        function addInventoryItem() {
-            const name = document.getElementById('inv-name').value;
-            if (!name) return;
-            
-            const type = document.getElementById('inv-type').value;
-            const newItem = { 
-                name, 
-                type,
-                desc: document.getElementById('inv-desc').value,
-                qty: parseInt(document.getElementById('inv-qty').value) || 1
-            };
-
-            if (type === 'weapon') {
-                newItem.atk = document.getElementById('inv-atk').value;
-                newItem.dmg = document.getElementById('inv-dmg').value;
-            } else if (type === 'potion') {
-                newItem.heal = document.getElementById('inv-heal').value;
-            }
-
-            characterData.inventory.push(newItem);
-            
-            // Reset campi
-            document.getElementById('inv-name').value = '';
-            document.getElementById('inv-desc').value = '';
-            document.getElementById('inv-atk').value = '';
-            document.getElementById('inv-dmg').value = '';
-            document.getElementById('inv-heal').value = '';
-            document.getElementById('inv-qty').value = '1';
-            
-            saveData(); loadCharacter(); 
-        }
-
-        function usePotion(index) {
-            const potion = characterData.inventory[index];
-            if(!potion || potion.qty <= 0) return;
-
-            let totalHeal = parseAndRollString(potion.heal || "0").total;
-            changeHP(totalHeal);
-            
-            potion.qty--;
-            if (potion.qty <= 0) characterData.inventory.splice(index, 1);
-
-            logDice(`🧪 ${potion.name}`, `${totalHeal}`, `Cura Punti Ferita`, "var(--secondary-color)");
-            updateBattleDisplay(`Usata: ${potion.name}`, totalHeal, "HP Recuperati");
-            
-            saveData(); loadCharacter();
-        }
-
-        // ==========================================
-        // LOGICA DEI TIRI (BATTAGLIA E DADI)
+        // TIRI (STATISTICHE E SCHERMI)
         // ==========================================
         let rollHistory = [];
 
         function parseAndRollString(diceString, doubleDice = false) {
-            let total = 0;
-            let logs = [];
+            let total = 0, logs = [];
             const match = diceString.match(/(\d+)d(\d+)(?:\s*([+-])\s*(\d+))?/);
-
             if (match) {
                 let diceCount = parseInt(match[1]);
-                const diceSides = parseInt(match[2]);
                 if (doubleDice) diceCount *= 2; 
-
                 for (let i = 0; i < diceCount; i++) {
-                    const r = Math.floor(Math.random() * diceSides) + 1;
-                    total += r;
-                    logs.push(r);
+                    const r = Math.floor(Math.random() * parseInt(match[2])) + 1;
+                    total += r; logs.push(r);
                 }
                 if (match[3] && match[4]) {
-                    const flatMod = parseInt(match[4]);
-                    if (match[3] === '+') total += flatMod;
-                    else if (match[3] === '-') total -= flatMod;
-                    logs.push(match[3] + flatMod);
+                    const flat = parseInt(match[4]);
+                    if (match[3] === '+') total += flat; else total -= flat;
+                    logs.push(match[3] + flat);
                 }
             } else {
                 total = parseInt(diceString) || 0;
@@ -593,60 +627,148 @@
             return { total, logs: logs.join(' ') };
         }
 
-        function updateBattleDisplay(label, value, subtext, critClass="") {
-            document.getElementById('battle-result-label').innerText = label;
-            document.getElementById('battle-result-value').innerText = value;
-            document.getElementById('battle-result-crit').innerHTML = critClass ? `<span class="${critClass}">${subtext}</span>` : subtext;
+        function updateScreen(target, label, value, subtext, critClass="") {
+            document.getElementById(`${target}-result-label`).innerText = label;
+            document.getElementById(`${target}-result-value`).innerText = value;
+            document.getElementById(`${target}-result-crit`).innerHTML = critClass ? `<span class="${critClass}">${subtext}</span>` : subtext;
         }
 
         function logDice(title, result, subtext, color="var(--primary-color)") {
-            const time = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            let logMsg = `
-                <strong style="color: ${color}">${title}</strong><br>
-                Risultato: <b style="font-size:18px;">${result}</b> <span style="font-size:11px; color:#777;">(${subtext})</span>
-                <div style="color:#777; font-size:11px; margin-top:3px; text-align:right;">${time}</div>
-            `;
+            const time = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+            let logMsg = `<strong style="color: ${color}">${title}</strong><br>Risultato: <b style="font-size:18px;">${result}</b> <span style="font-size:11px; color:#777;">(${subtext})</span><div style="color:#777; font-size:11px; margin-top:3px; text-align:right;">${time}</div>`;
             rollHistory.unshift(logMsg);
             if (rollHistory.length > 10) rollHistory.pop();
             document.getElementById('dice-log').innerHTML = rollHistory.map(log => `<li>${log}</li>`).join('');
         }
 
+        // Tiri Caratteristiche e Abilità
+        function rollStat(name, modStr) {
+            const mod = parseInt(modStr.replace('+', '')) || 0;
+            const d20 = Math.floor(Math.random() * 20) + 1;
+            const total = d20 + mod;
+            let critClass = "";
+            let screenSub = `d20: ${d20} + ${mod}`;
+
+            if (d20 === 20) { critClass = "crit-text"; screenSub += " (SUCCESSO CRITICO!)"; }
+            if (d20 === 1) { critClass = "crit-text"; screenSub += " (FALLIMENTO CRITICO!)"; document.getElementById('scheda-result-crit').style.color = "var(--danger-color)"; } 
+            else { document.getElementById('scheda-result-crit').style.color = "#ffd700"; }
+
+            logDice(`🎲 ${name}`, total, screenSub, "var(--text-color)");
+            updateScreen("scheda", `Tiro: ${name}`, total, screenSub, critClass);
+        }
+
+        // Tiri Battaglia
         function rollAttack(isInv, index) {
             const atkData = isInv ? characterData.inventory[index] : characterData.battleAttacks[index];
-            const atkMod = parseInt((atkData.atk || "+0").replace('+', '')) || 0;
-            
+            const mod = parseInt((atkData.atk || "+0").replace('+', '')) || 0;
             const d20 = Math.floor(Math.random() * 20) + 1;
-            const total = d20 + atkMod;
+            const total = d20 + mod;
 
-            lastAttackWasCrit = (d20 === 20); // Salva in memoria per il raddoppio danni automatico
+            lastAttackWasCrit = (d20 === 20);
+            let critClass = "", screenSub = `d20: ${d20} + ${mod}`;
+            document.getElementById('battle-result-crit').style.color = "#ffd700";
 
-            let critStr = "";
-            let screenSubtext = `d20: ${d20} + ${atkMod}`;
-            if (d20 === 20) { critStr = " (CRITICO!)"; screenSubtext = "CRITICO! (Danni raddoppiati al prossimo tap)"; }
-            if (d20 === 1) { critStr = " (FALLIMENTO!)"; screenSubtext = "FALLIMENTO CRITICO!"; }
+            if (d20 === 20) { critClass = "crit-text"; screenSub = "CRITICO! (Danni raddoppiati in memoria)"; }
+            if (d20 === 1) { critClass = "crit-text"; screenSub = "FALLIMENTO CRITICO!"; document.getElementById('battle-result-crit').style.color = "var(--danger-color)"; }
 
-            logDice(`🎯 ${atkData.name} (Attacco)`, total, `d20: ${d20} + ${atkMod}${critStr}`);
-            updateBattleDisplay(`TxC: ${atkData.name}`, total, screenSubtext, (d20===20||d20===1) ? 'crit-text' : '');
+            logDice(`🎯 ${atkData.name} (TxC)`, total, screenSub);
+            updateScreen("battle", `TxC: ${atkData.name}`, total, screenSub, critClass);
         }
 
         function rollDamage(isInv, index) {
             const atkData = isInv ? characterData.inventory[index] : characterData.battleAttacks[index];
             const dmgResult = parseAndRollString(atkData.dmg || "0", lastAttackWasCrit);
-            
-            let critNotice = lastAttackWasCrit ? "CRITICO APPLICATO!" : `Danno inflitto`;
+            let critNotice = lastAttackWasCrit ? "CRITICO APPLICATO!" : `Danno normale`;
             
             logDice(`💥 ${atkData.name} (Danno)`, dmgResult.total, `${dmgResult.logs} | ${atkData.type||''}`, "var(--danger-color)");
-            updateBattleDisplay(`Danno: ${atkData.name}`, dmgResult.total, critNotice, lastAttackWasCrit ? 'crit-text' : '');
-            
-            lastAttackWasCrit = false; // Reset memoria critico
+            updateScreen("battle", `Danno: ${atkData.name}`, dmgResult.total, critNotice, lastAttackWasCrit ? 'crit-text' : '');
+            lastAttackWasCrit = false; 
         }
 
-        function rollDice(sides) {
+        function rollSimpleDice(sides) {
             const result = Math.floor(Math.random() * sides) + 1;
             document.getElementById('dice-result').innerText = result;
-            document.getElementById('dice-label').innerText = `Risultato d${sides}`;
-            
             logDice(`🎲 d${sides}`, result, `Tiro base`, "var(--text-color)");
+        }
+
+        // ==========================================
+        // INVENTARIO
+        // ==========================================
+        function toggleInvForm() {
+            const t = document.getElementById('inv-type').value;
+            document.getElementById('inv-weapon-fields').style.display = (t === 'weapon') ? 'block' : 'none';
+            document.getElementById('inv-potion-fields').style.display = (t === 'potion') ? 'block' : 'none';
+        }
+        function addInventoryItem() {
+            const name = document.getElementById('inv-name').value;
+            if (!name) return;
+            const type = document.getElementById('inv-type').value;
+            const newItem = { name, type, desc: document.getElementById('inv-desc').value, qty: parseInt(document.getElementById('inv-qty').value) || 1 };
+            if (type === 'weapon') { newItem.atk = document.getElementById('inv-atk').value; newItem.dmg = document.getElementById('inv-dmg').value; } 
+            else if (type === 'potion') { newItem.heal = document.getElementById('inv-heal').value; }
+            characterData.inventory.push(newItem);
+            document.querySelectorAll('.inv-form input[type=text], .inv-form input[type=number]').forEach(el => el.value = (el.id==='inv-qty')?'1':'');
+            saveData(); loadCharacter(); 
+        }
+        function usePotion(index) {
+            const pot = characterData.inventory[index];
+            if(!pot || pot.qty <= 0) return;
+            let total = parseAndRollString(pot.heal || "0").total;
+            changeHP(total);
+            pot.qty--; if(pot.qty <= 0) characterData.inventory.splice(index, 1);
+            logDice(`🧪 ${pot.name}`, total, `Cura HP`, "var(--secondary-color)");
+            updateScreen("battle", `Usata: ${pot.name}`, total, "HP Recuperati");
+            saveData(); loadCharacter();
+        }
+
+        // ==========================================
+        // ESPORTAZIONE PDF
+        // ==========================================
+        function exportPDF() {
+            // Mappatura Dati nel Layout PDF Nascosto
+            document.getElementById('pdf-name').innerText = characterData.name;
+            document.getElementById('pdf-class').innerText = characterData.class;
+            document.getElementById('pdf-level').innerText = characterData.level;
+            document.getElementById('pdf-species').innerText = characterData.species;
+            
+            document.getElementById('pdf-hp').innerText = characterData.hpCurrent + " / " + characterData.hpMax;
+            document.getElementById('pdf-ac').innerText = characterData.ac;
+            document.getElementById('pdf-init').innerText = characterData.initiative;
+            document.getElementById('pdf-dc').innerText = characterData.spellDC;
+            document.getElementById('pdf-spellatk').innerText = characterData.spellAtk;
+
+            document.getElementById('pdf-stats').innerHTML = Object.entries(characterData.stats).map(([k,v]) => `<div><strong>${k}:</strong> ${v}</div>`).join('');
+            document.getElementById('pdf-skills').innerHTML = Object.entries(characterData.skills).map(([k,v]) => `<div>${k} (${v.attr}): <strong>${v.mod}</strong></div>`).join('');
+            
+            let allAttacks = [...characterData.battleAttacks, ...characterData.inventory.filter(i => i.atk || i.dmg)];
+            document.getElementById('pdf-attacks').innerHTML = allAttacks.map(a => `<div><strong>${a.name}</strong> - TxC: ${a.atk||'+0'} | Danno: ${a.dmg||'-'}</div>`).join('');
+            
+            document.getElementById('pdf-features').innerHTML = characterData.features.map(f => `<div><strong>${f.name}</strong></div>`).join('');
+            
+            let spellList = "";
+            characterData.spells.forEach(group => {
+                spellList += `<div style="margin-top:10px;"><strong>-- ${group.level} --</strong></div>`;
+                group.items.forEach(s => spellList += `<div>${s.name} (Raggio: ${s.range})</div>`);
+            });
+            document.getElementById('pdf-spells').innerHTML = spellList;
+            
+            document.getElementById('pdf-coins').innerHTML = `<div>Oro: ${characterData.currency.gold} | Argento: ${characterData.currency.silver} | Rame: ${characterData.currency.copper}</div>`;
+
+            // Generazione PDF con html2pdf
+            const element = document.getElementById('pdf-export-template');
+            element.style.display = 'block';
+            
+            const opt = {
+                margin: 10,
+                filename: `${characterData.name.replace(/\s+/g, '_')}_Scheda.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.style.display = 'none';
+            });
         }
 
         // ==========================================
@@ -654,17 +776,20 @@
         // ==========================================
         function loadCharacter() {
             loadSavedData(); 
-
             document.getElementById('char-name').innerText = characterData.name;
             document.getElementById('char-subtitle').innerText = `${characterData.species} | ${characterData.class}`;
             document.getElementById('char-level').innerText = characterData.level;
             
-            const icon = document.getElementById('insp-icon');
-            if (characterData.inspiration) { icon.classList.add('active'); } else { icon.classList.remove('active'); }
+            const inspIcon = document.getElementById('insp-icon');
+            const inspCont = document.getElementById('insp-container');
+            if (characterData.inspiration) { 
+                inspIcon.classList.add('active'); inspCont.classList.add('active');
+            } else { 
+                inspIcon.classList.remove('active'); inspCont.classList.remove('active');
+            }
 
             document.querySelectorAll('.char-hp-current-display').forEach(el => el.innerText = characterData.hpCurrent);
             document.querySelectorAll('.char-hp-max-display').forEach(el => el.innerText = characterData.hpMax);
-            
             document.getElementById('char-ac').innerText = characterData.ac;
             document.getElementById('char-init').innerText = characterData.initiative;
             document.getElementById('char-dc').innerText = characterData.spellDC;
@@ -675,71 +800,45 @@
             document.getElementById('coin-silver').value = characterData.currency.silver;
             document.getElementById('coin-copper').value = characterData.currency.copper;
 
-            document.getElementById('stats-container').innerHTML = Object.entries(characterData.stats).map(([stat, value]) => `<div class="stat-box"><span>${stat}</span><strong>${value}</strong></div>`).join('');
-            document.getElementById('saves-container').innerHTML = Object.entries(characterData.savingThrows).map(([stat, value]) => `<div class="stat-box"><span>${stat}</span><strong>${value}</strong></div>`).join('');
+            // Render Caratteristiche e TS (Cliccabili)
+            document.getElementById('stats-container').innerHTML = Object.entries(characterData.stats).map(([s, v]) => `<div class="stat-box" onclick="rollStat('${s}', '${v}')"><span>${s}</span><strong>${v}</strong></div>`).join('');
+            document.getElementById('saves-container').innerHTML = Object.entries(characterData.savingThrows).map(([s, v]) => `<div class="stat-box" onclick="rollStat('TS ${s}', '${v.replace(/<[^>]*>?/gm, '')}')"><span>${s}</span><strong>${v}</strong></div>`).join('');
+            
+            // Render Abilità (Cliccabili)
+            document.getElementById('skills-container').innerHTML = Object.entries(characterData.skills).map(([name, data]) => `<div class="skill-btn" onclick="rollStat('${name}', '${data.mod}')"><span class="name">${name} <span style="font-weight:normal; color:#777;">(${data.attr})</span></span><span class="mod">${data.mod}</span></div>`).join('');
 
-            // Rendering Dadi Vita
+            // Render Dadi Vita
             let hdHtml = '<span style="font-size: 12px; color: var(--text-muted); margin-right: 10px;">DADI VITA:</span>';
             for(let i=0; i<characterData.level; i++) hdHtml += `<span class="hd-icon ${i < (characterData.level - characterData.hitDiceUsed) ? 'available' : ''}">🎲</span>`;
             document.getElementById('hd-container').innerHTML = hdHtml;
 
             // RENDER COMBATTIMENTO
-            let baseAttacksHtml = characterData.battleAttacks.map((atk, index) => `
-                <div class="attack-card">
-                    <div class="attack-header"><span class="attack-name">⚔️ ${atk.name}</span><span class="attack-stats">TxC: ${atk.atk} | Danni: ${atk.dmg}</span></div>
-                    <div class="attack-actions">
-                        <button class="action-btn btn-hit" onclick="rollAttack(false, ${index})">🎯 Colpire</button>
-                        <button class="action-btn btn-dmg" onclick="rollDamage(false, ${index})">💥 Danno</button>
-                    </div>
-                </div>
-            `).join('');
-
-            let invAttacksHtml = "";
-            let invPotionsHtml = "";
-            let hasPotions = false;
-
-            characterData.inventory.forEach((item, index) => {
+            let baseAttacksHtml = characterData.battleAttacks.map((atk, i) => `<div class="attack-card"><div class="attack-header"><span class="attack-name">⚔️ ${atk.name}</span><span class="attack-stats">TxC: ${atk.atk} | Danni: ${atk.dmg}</span></div><div class="attack-actions"><button class="action-btn btn-hit" onclick="rollAttack(false, ${i})">🎯 Colpire</button><button class="action-btn btn-dmg" onclick="rollDamage(false, ${i})">💥 Danno</button></div></div>`).join('');
+            let invAtkHtml = "", invPotHtml = "", hasPot = false;
+            characterData.inventory.forEach((item, i) => {
                 if (item.type === 'weapon' || item.atk || item.dmg) {
-                    invAttacksHtml += `
-                    <div class="attack-card" style="border-color: var(--secondary-color);">
-                        <div class="attack-header"><span class="attack-name">🎒 ${item.name}</span><span class="attack-stats">TxC: ${item.atk||'+0'} | Danni: ${item.dmg||'0'}</span></div>
-                        <div class="attack-actions">
-                            <button class="action-btn btn-hit" onclick="rollAttack(true, ${index})">🎯 Colpire</button>
-                            <button class="action-btn btn-dmg" onclick="rollDamage(true, ${index})">💥 Danno</button>
-                        </div>
-                    </div>`;
+                    invAtkHtml += `<div class="attack-card" style="border-color: var(--secondary-color);"><div class="attack-header"><span class="attack-name">🎒 ${item.name}</span><span class="attack-stats">TxC: ${item.atk||'+0'} | Danni: ${item.dmg||'0'}</span></div><div class="attack-actions"><button class="action-btn btn-hit" onclick="rollAttack(true, ${i})">🎯 Colpire</button><button class="action-btn btn-dmg" onclick="rollDamage(true, ${i})">💥 Danno</button></div></div>`;
                 } else if (item.type === 'potion') {
-                    hasPotions = true;
-                    invPotionsHtml += `
-                    <div class="attack-card" style="border-color: var(--secondary-color);">
-                        <div class="attack-header"><span class="attack-name">🧪 ${item.name} <span class="potion-qty">x${item.qty}</span></span><span class="attack-stats">Cura: ${item.heal||'0'}</span></div>
-                        <div class="attack-actions"><button class="action-btn btn-heal" onclick="usePotion(${index})">💊 Bevi Pozione</button></div>
-                    </div>`;
+                    hasPot = true;
+                    invPotHtml += `<div class="attack-card" style="border-color: var(--secondary-color);"><div class="attack-header"><span class="attack-name">🧪 ${item.name} <span style="background:var(--secondary-color); color:#000; padding:2px 6px; border-radius:12px; font-size:10px;">x${item.qty}</span></span><span class="attack-stats">Cura: ${item.heal||'0'}</span></div><div class="attack-actions"><button class="action-btn btn-heal" onclick="usePotion(${i})">💊 Bevi Pozione</button></div></div>`;
                 }
             });
-
-            document.getElementById('battle-attacks-container').innerHTML = baseAttacksHtml + invAttacksHtml;
-            document.getElementById('battle-potions-list').innerHTML = invPotionsHtml;
-            document.getElementById('battle-potions-container').style.display = hasPotions ? 'block' : 'none';
+            document.getElementById('battle-attacks-container').innerHTML = baseAttacksHtml + invAtkHtml;
+            document.getElementById('battle-potions-list').innerHTML = invPotHtml;
+            document.getElementById('battle-potions-container').style.display = hasPot ? 'block' : 'none';
 
             // RENDER INVENTARIO
-            document.getElementById('inventory-container').innerHTML = characterData.inventory.map((item, index) => {
+            document.getElementById('inventory-container').innerHTML = characterData.inventory.map((item, i) => {
                 let badge = item.type === 'weapon' ? '⚔️' : (item.type === 'potion' ? '🧪' : '🎒');
-                let useBtn = item.type === 'potion' ? `<button onclick="usePotion(${index})" style="background:var(--secondary-color); color:#000; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; cursor:pointer; margin-top:5px;">Usa (Rimaste: ${item.qty})</button>` : '';
-                return `
-                <details><summary>${badge} ${item.name} ${item.qty > 1 ? `<span class="potion-qty">x${item.qty}</span>` : ''}</summary><div class="details-content">
-                ${item.atk ? `<strong>Attacco:</strong> ${item.atk}<br>` : ''}
-                ${item.dmg ? `<strong>Danno:</strong> ${item.dmg}<br>` : ''}
-                ${item.heal ? `<strong>Cura:</strong> ${item.heal}<br>` : ''}
-                ${item.desc ? `<em>${item.desc}</em><br>` : ''}
-                ${useBtn}</div></details>`;
+                let useBtn = item.type === 'potion' ? `<button onclick="usePotion(${i})" style="background:var(--secondary-color); color:#000; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; cursor:pointer; margin-top:5px;">Usa (Rimaste: ${item.qty})</button>` : '';
+                return `<details><summary>${badge} ${item.name} ${item.qty > 1 ? `x${item.qty}` : ''}</summary><div class="details-content">${item.atk ? `<strong>Attacco:</strong> ${item.atk}<br>` : ''}${item.dmg ? `<strong>Danno:</strong> ${item.dmg}<br>` : ''}${item.heal ? `<strong>Cura:</strong> ${item.heal}<br>` : ''}${item.desc ? `<em>${item.desc}</em><br>` : ''}${useBtn}</div></details>`;
             }).join('');
 
             // RENDER SPELLS & TRATTI
-            document.getElementById('features-container').innerHTML = characterData.features.map(feat => `<details><summary>${feat.name} <span>+</span></summary><div class="details-content">${feat.desc}</div></details>`).join('');
-            document.getElementById('spells-container').innerHTML = characterData.spells.map(group => {
-                let slotsHtml = (group.levelId > 0 && characterData.spellSlots[group.levelId]) ? `<div class="slot-container"><span style="font-size:12px; color:var(--text-muted); width:75px;">Slot Usati:</span>` + characterData.spellSlots[group.levelId].map((isUsed, idx) => `<div class="slot-dot ${isUsed ? 'used' : ''}" onclick="toggleSpellSlot(${group.levelId}, ${idx})"></div>`).join('') + `</div>` : '';
-                return `<div class="spell-level">${group.level}</div>${slotsHtml}` + group.items.map(spell => `<details><summary>${spell.name} <span>▼</span></summary><div class="details-content"><div class="spell-tags"><span>🎯 ${spell.range}</span><span>💥 ${spell.dmg}</span><span>🗣️ ${spell.comp}</span></div><p style="margin-top:10px;">${spell.desc}</p></div></details>`).join('');
+            document.getElementById('features-container').innerHTML = characterData.features.map(f => `<details><summary>${f.name} <span>+</span></summary><div class="details-content">${f.desc}</div></details>`).join('');
+            document.getElementById('spells-container').innerHTML = characterData.spells.map(g => {
+                let slotsHtml = (g.levelId > 0 && characterData.spellSlots[g.levelId]) ? `<div class="slot-container"><span style="font-size:12px; color:var(--text-muted); width:75px;">Slot Usati:</span>` + characterData.spellSlots[g.levelId].map((used, idx) => `<div class="slot-dot ${used ? 'used' : ''}" onclick="toggleSpellSlot(${g.levelId}, ${idx})"></div>`).join('') + `</div>` : '';
+                return `<div class="spell-level">${g.level}</div>${slotsHtml}` + g.items.map(s => `<details><summary>${s.name} <span>▼</span></summary><div class="details-content"><div class="spell-tags"><span>🎯 ${s.range}</span><span>💥 ${s.dmg}</span><span>🗣️ ${s.comp}</span></div><p style="margin-top:10px;">${s.desc}</p></div></details>`).join('');
             }).join('');
         }
 
