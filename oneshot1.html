@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Schermo del DM - NFC Edition</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1e1e1e;
+            --primary-color: #bb86fc;
+            --secondary-color: #03dac6;
+            --danger-color: #cf6679;
+            --warning-color: #f6e05e;
+            --text-color: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --border-radius: 12px;
+        }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 0; padding-bottom: 90px; }
+        header { background-color: var(--surface-color); padding: 20px; text-align: center; border-bottom: 1px solid #333; }
+        header h1 { margin: 0; font-size: 24px; color: var(--danger-color); display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .party-level { font-size: 14px; color: var(--text-muted); margin-top: 5px; display: block; }
+
+        .nfc-scan-btn { background: linear-gradient(45deg, var(--primary-color), var(--secondary-color)); color: #000; border: none; padding: 15px 20px; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; width: 90%; margin: 15px auto 5px auto; display: flex; justify-content: center; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(3, 218, 198, 0.4); }
+        .debug-panel { text-align: center; margin-bottom: 15px; padding: 0 15px; }
+        .btn-debug { background: #333; color: white; border: 1px solid #555; padding: 8px 15px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: bold; }
+
+        .section { display: none; padding: 15px; animation: fadeIn 0.3s; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card { background-color: var(--surface-color); border-radius: var(--border-radius); padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        
+        input { width: 100%; background: #2c2c2c; border: 1px solid #444; color: white; padding: 10px; margin-bottom: 10px; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+        .btn-primary { width: 100%; background-color: var(--primary-color); color: #000; font-weight: bold; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .btn-danger { background-color: var(--danger-color); color: #000; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .btn-secondary { background-color: var(--secondary-color); color: #000; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .encounter-header { background: #2c2c2c; padding: 10px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid var(--danger-color); }
+
+        .init-row { display: flex; justify-content: space-between; align-items: center; background: #2c2c2c; padding: 10px; margin-bottom: 8px; border-radius: 8px; border-left: 4px solid transparent; }
+        .init-row.active-turn { border-left-color: var(--secondary-color); background: #333; box-shadow: 0 0 10px rgba(3, 218, 198, 0.2); }
+        .init-score { font-weight: bold; color: var(--primary-color); width: 30px; text-align: center; font-size: 18px; }
+        .init-name { flex: 1; font-weight: bold; padding-left: 10px; }
+        .init-hp-controls { display: flex; align-items: center; gap: 5px; }
+        .hp-btn { background: #444; color: white; border: none; border-radius: 4px; width: 25px; height: 25px; cursor: pointer; font-weight: bold; }
+        .init-controls { display: flex; gap: 10px; margin-top: 15px; }
+
+        .display-screen { text-align: center; padding: 15px; background: #000; border: 2px solid #333; border-radius: 8px; margin-bottom: 15px; }
+        .display-screen h2 { margin: 5px 0 0 0; font-size: 38px; color: var(--danger-color); }
+        .display-screen .crit-text { font-size: 14px; color: #ffd700; display: block; margin-top: 5px; font-weight: bold; }
+
+        .monster-card { border: 1px solid #444; border-left: 3px solid var(--danger-color); }
+        .monster-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        .monster-stats { display: flex; gap: 15px; font-size: 12px; color: var(--text-muted); }
+        .monster-stats strong { color: white; font-size: 14px; }
+        .monster-attributes { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; margin: 10px 0; text-align: center; }
+        .attr-box { background: #333; padding: 4px; border-radius: 4px; font-size: 10px; color: var(--text-muted); }
+        .attr-box strong { display: block; font-size: 14px; color: var(--secondary-color); margin-top: 2px; }
+        .monster-traits { font-size: 12px; color: #ccc; margin-bottom: 10px; padding: 8px; background: rgba(0,0,0,0.2); border-left: 2px solid var(--warning-color); }
+        .monster-traits strong { color: var(--warning-color); }
+
+        .attack-card { background-color: #2c2c2c; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+        .attack-actions { display: flex; gap: 5px; margin-top: 10px; }
+        .action-btn { flex: 1; padding: 8px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; }
+        .btn-hit { background-color: var(--primary-color); color: #000; }
+        .btn-dmg { background-color: var(--danger-color); color: #000; }
+
+        details { background-color: #2c2c2c; border-radius: 8px; margin-bottom: 10px; padding: 10px; }
+        summary { font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        summary::-webkit-details-marker { display: none; }
+        .read-aloud { background: rgba(187, 134, 252, 0.1); border-left: 3px solid var(--primary-color); padding: 10px; font-style: italic; color: #d0b3ff; margin-top: 10px; font-size: 14px; }
+        .dm-note { font-size: 13px; color: #ccc; margin-top: 10px; border-top: 1px dashed #555; padding-top: 10px;}
+
+        .shop-item { display: flex; justify-content: space-between; border-bottom: 1px dashed #444; padding: 10px 0; }
+        .shop-price { color: var(--warning-color); font-weight: bold; }
+
+        .dice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .dice-btn { background-color: #2c2c2c; color: var(--text-color); border: 2px solid var(--danger-color); border-radius: 8px; padding: 15px 0; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .dice-btn:active { background-color: var(--danger-color); color: #fff; }
+        #dice-log { list-style: none; padding: 0; margin: 0; font-size: 14px; color: var(--text-muted); }
+        #dice-log li { padding: 8px 0; border-bottom: 1px dashed #333; }
+
+        nav { position: fixed; bottom: 0; width: 100%; background-color: var(--surface-color); display: flex; padding: 8px 0; border-top: 1px solid #333; z-index: 1000; }
+        nav button { background: none; border: none; color: var(--text-muted); font-size: 10px; font-weight: 600; display: flex; flex-direction: column; align-items: center; padding: 5px 2px; cursor: pointer; flex: 1; }
+        nav button.active { color: var(--danger-color); background-color: rgba(207, 102, 121, 0.1); border-radius: 8px; }
+        nav button i { font-size: 20px; margin-bottom: 4px; font-style: normal; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🐉 Dietro lo Schermo</h1>
+        <span class="party-level">Avventura: <strong id="adv-title">Pronto all'uso</strong></span>
+    </header>
+
+    <button class="nfc-scan-btn" onclick="startNFCScan()">
+        <span style="font-size:24px;">📱</span> Scansiona Miniatura Boss
+    </button>
+    
+    <div class="debug-panel">
+        <p style="color:var(--text-muted); font-size:11px;">Scrivi <strong>oneshot_sindaco</strong> sul Tag NFC con NFC Tools (Record Testo).<br>Se sei su iPhone, usa il tasto qui sotto per caricare:</p>
+        <button class="btn-debug" onclick="caricaAvventura('oneshot_sindaco')">Sblocca One-Shot Completa</button>
+    </div>
+
+    <!-- SEZIONE INIZIATIVA -->
+    <div id="sec-iniziativa" class="section active">
+        <div class="card">
+            <h3 style="margin-top:0;">Aggiungi Eroe</h3>
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="init-name" placeholder="Nome Eroe" style="flex:2;">
+                <input type="number" id="init-score" placeholder="Iniz" style="flex:1;">
+                <input type="number" id="init-hp" placeholder="HP" style="flex:1;">
+            </div>
+            <button class="btn-primary" onclick="addInitiative()">➕ Aggiungi al Turno</button>
+        </div>
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin:0;">Ordine di Turno</h3>
+                <span id="round-counter" style="color:var(--text-muted); font-size:12px;">Round 1</span>
+            </div>
+            <div id="initiative-list">
+                <p style="color:var(--text-muted); font-size:12px; text-align:center;">Nessuno in combattimento.</p>
+            </div>
+            <div class="init-controls">
+                <button class="btn-secondary" style="flex:2;" onclick="nextTurn()">⏭️ Prossimo Turno</button>
+                <button class="btn-danger" style="flex:1;" onclick="clearInitiative()">🗑️ Svuota</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEZIONE MOSTRI -->
+    <div id="sec-mostri" class="section">
+        <div class="display-screen">
+            <span id="dm-result-label">Tiro del Mostro</span>
+            <h2 id="dm-result-value">--</h2>
+            <div class="crit-text" id="dm-result-crit"></div>
+        </div>
+        <div id="mostri-content"><p style="color:var(--text-muted); text-align:center;">Nessun incontro caricato.</p></div>
+    </div>
+
+    <!-- SEZIONE LUOGHI -->
+    <div id="sec-luoghi" class="section">
+        <div id="luoghi-content"><p style="color:var(--text-muted); text-align:center;">Nessuna mappa caricata.</p></div>
+    </div>
+
+    <!-- SEZIONE NEGOZIO -->
+    <div id="sec-negozio" class="section">
+        <div id="negozio-content"><p style="color:var(--text-muted); text-align:center;">Nessun mercante qui.</p></div>
+    </div>
+
+    <!-- SEZIONE DADI -->
+    <div id="sec-dadi" class="section">
+        <div class="card">
+            <div class="display-screen">
+                <span style="font-size: 12px; color: var(--text-muted);">Lancio Nascosto (DM)</span>
+                <h2 id="dice-result">--</h2>
+            </div>
+            <div class="dice-grid">
+                <button class="dice-btn" onclick="rollSimpleDice(4)">d4</button>
+                <button class="dice-btn" onclick="rollSimpleDice(6)">d6</button>
+                <button class="dice-btn" onclick="rollSimpleDice(8)">d8</button>
+                <button class="dice-btn" onclick="rollSimpleDice(10)">d10</button>
+                <button class="dice-btn" onclick="rollSimpleDice(12)">d12</button>
+                <button class="dice-btn" onclick="rollSimpleDice(20)">d20</button>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Cronologia</h3>
+            <ul id="dice-log"><li>Nessun lancio effettuato.</li></ul>
+        </div>
+    </div>
+
+    <!-- SEZIONE NOTE -->
+    <div id="sec-note" class="section">
+        <div class="card">
+            <h3 style="margin-top: 0;">Appunti Segreti</h3>
+            <textarea id="dm-notes" style="width: 100%; height: 350px; background: #2c2c2c; color: white; border: 1px solid #444; padding: 12px; border-radius: 8px; box-sizing: border-box; resize: vertical;" placeholder="Scrivi qui i tuoi appunti della sessione..."></textarea>
+        </div>
+    </div>
+
+    <nav>
+        <button onclick="switchTab('sec-iniziativa')" id="btn-sec-iniziativa" class="active"><i>⏱️</i>Turni</button>
+        <button onclick="switchTab('sec-luoghi')" id="btn-sec-luoghi"><i>🗺️</i>Storia</button>
+        <button onclick="switchTab('sec-mostri')" id="btn-sec-mostri"><i>👹</i>Mostri</button>
+        <button onclick="switchTab('sec-negozio')" id="btn-sec-negozio"><i>💰</i>Shop</button>
+        <button onclick="switchTab('sec-dadi')" id="btn-sec-dadi"><i>🎲</i>Dadi</button>
+        <button onclick="switchTab('sec-note')" id="btn-sec-note"><i>📝</i>Note</button>
+    </nav>
+
+    <script>
+        // ==========================================
+        // DATABASE INTERNO (Il "Disco di Gioco")
+        // ==========================================
+        const dbAvventure = {
+            "oneshot_sindaco": {
+                "titolo": "Il Ratto del Sindaco",
+                "background": "Siete in viaggio da giorni quando i contorni di Querciaverde emergono all'orizzonte. Di solito è un borgo pacifico, noto per il legname e l'ottima birra chiara. Ma oggi qualcosa non va: una colonna di fumo nero si alza dalla piazza principale e il portone di legno del villaggio è stato sfondato. Non ci sono guardie, solo il sinistro gracchiare dei corvi. Vi fate strada tra i vicoli deserti fino a raggiungere l'unico edificio da cui provengono dei rumori.",
+                "luoghi": [
+                    {
+                        "nome": "1. Taverna di Querciaverde",
+                        "testo": "Spingete la porta della taverna e venite accolti da un silenzio innaturale. I tavoli sono mezzi vuoti e un oste dall'aria stravolta vi corre incontro: 'Vi prego, avventurieri! Un'orda di goblin guidata da un orco enorme ha assaltato il villaggio e rapito il nostro sindaco! Si sono diretti verso nord.'",
+                        "note": "L'oste offrirà bevande gratis. Rannicchiato vicino al bancone c'è un mercante itinerante disposto a vendere le sue scorte sottocosto pur di scappare."
+                    },
+                    {
+                        "nome": "2. Il Guado sul Ruscello",
+                        "testo": "Arrivate a un ruscello dall'acqua limpida che scorre rapida tra le rocce. Improvvisamente, sentite il rumore di rami spezzati e risate stridule provenire dai cespugli oltre l'acqua.",
+                        "note": "Richiedi Percezione CD 14. Chi fallisce è Sorpreso nel primo round. I goblin attaccano a distanza e sfruttano il terreno difficile."
+                    },
+                    {
+                        "nome": "3. La Tana Congelata",
+                        "testo": "L'aria si fa gelida. Al centro, un gigantesco orco sfregiato tiene il sindaco legato a una roccia. Ai suoi lati, due grossi lupi ringhiano scoprendo le zanne, pronti a scattare al suo comando.",
+                        "note": "I lupi attaccano il bersaglio più vicino. Se i lupi muoiono, l'Orco entra in Furia Sanguinaria."
+                    }
+                ],
+                "incontri": [
+                    {
+                        "titolo_incontro": "Imboscata al Guado (Mappa 2)",
+                        "mostri": [
+                            { 
+                                "nome": "Goblin", "quantita": 4, "hp": 7, "ca": 15, "init_bonus": 2, 
+                                "percezione_passiva": 9,
+                                "stats": { "FOR": "-1", "DES": "+2", "COS": "+0", "INT": "+0", "SAG": "-1", "CAR": "-1" },
+                                "tratti": [{ "nome": "Fuga Agile", "descrizione": "Disimpegno o Nascondersi come Azione Bonus in ogni turno." }],
+                                "attacchi": [{ "nome": "Scimitarra", "txc": 4, "danni": "1d6+2" }, { "nome": "Arco Corto", "txc": 4, "danni": "1d6+2" }] 
+                            }
+                        ]
+                    },
+                    {
+                        "titolo_incontro": "La Tana del Boss (Mappa 3)",
+                        "mostri": [
+                            { 
+                                "nome": "Lupo", "quantita": 2, "hp": 11, "ca": 13, "init_bonus": 2, 
+                                "percezione_passiva": 13,
+                                "stats": { "FOR": "+1", "DES": "+2", "COS": "+1", "INT": "-4", "SAG": "+1", "CAR": "-2" },
+                                "tratti": [
+                                    { "nome": "Tattiche di Branco", "descrizione": "Vantaggio ai TxC se un alleato è a 1,5m dal bersaglio." }
+                                ],
+                                "attacchi": [{ "nome": "Morso (CD 11 FOR o Prono)", "txc": 4, "danni": "2d4+2" }] 
+                            },
+                            { 
+                                "nome": "Orco Boss", "quantita": 1, "hp": 45, "ca": 16, "init_bonus": 1, 
+                                "percezione_passiva": 11,
+                                "stats": { "FOR": "+4", "DES": "+1", "COS": "+3", "INT": "-1", "SAG": "+0", "CAR": "+3" },
+                                "tratti": [
+                                    { "nome": "Furia Sanguinaria", "descrizione": "Se i lupi muoiono, infligge +2 danni mischia." }
+                                ],
+                                "attacchi": [{ "nome": "Ascia Bipenne", "txc": 6, "danni": "1d12+4" }, { "nome": "Giavellotto", "txc": 6, "danni": "1d6+4" }] 
+                            }
+                        ]
+                    }
+                ],
+                "negozio": {
+                    "nome": "Scorte del Mercante (Taverna)",
+                    "oggetti": [
+                        { "nome": "Spada Lunga", "prezzo": "15 MO" },
+                        { "nome": "Corda di Canapa (15m)", "prezzo": "1 MO" },
+                        { "nome": "Pozione di Guarigione", "prezzo": "45 MO" }
+                    ]
+                }
+            }
+        };
+
+        let initiativeList = []; let activeTurnIndex = 0; let currentRound = 1; let lastAttackWasCrit = false; let rollHistory = [];
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.getElementById('btn-' + tabId).classList.add('active');
+        }
+
+        // ==========================================
+        // SISTEMA LETTURA CHIAVE NFC
+        // ==========================================
+        async function startNFCScan() {
+            const btn = document.querySelector('.nfc-scan-btn');
+            if (!('NDEFReader' in window)) {
+                alert("La lettura NFC su Web funziona solo su Android (Chrome). Usa il pulsante 'Sblocca One-Shot' qui sotto se sei su iPhone.");
+                return;
+            }
+            try {
+                btn.innerHTML = "⏳ Appoggia la miniatura al telefono...";
+                const ndef = new NDEFReader(); await ndef.scan();
+                ndef.addEventListener("reading", ({ message }) => {
+                    for (const record of message.records) {
+                        if (record.recordType === "text") {
+                            const tagText = new TextDecoder(record.encoding).decode(record.data).trim();
+                            if (dbAvventure[tagText]) {
+                                btn.innerHTML = "✅ Avventura Caricata!";
+                                caricaAvventura(tagText);
+                                setTimeout(() => { btn.innerHTML = "📱 Scansiona Nuova Miniatura"; }, 2000);
+                            } else {
+                                alert("Miniatura non riconosciuta dal sistema. Hai scritto la chiave giusta sul tag?");
+                                btn.innerHTML = "❌ Chiave Errata";
+                            }
+                        }
+                    }
+                });
+            } catch (error) { alert("Errore sensore NFC: " + error.message); }
+        }
+
+        function caricaAvventura(id_avventura) {
+            const adv = dbAvventure[id_avventura];
+            document.getElementById('adv-title').innerText = adv.titolo;
+
+            // RENDER LUOGHI E STORIA
+            let luoghiHtml = `<div class="card" style="border: 1px solid var(--primary-color);">
+                <h3 style="margin-top:0;">📜 L'Arrivo</h3>
+                <div class="read-aloud">"${adv.background}"</div>
+            </div>`;
+            
+            adv.luoghi.forEach(luogo => {
+                luoghiHtml += `<div class="card">
+                    <h3 style="margin-top:0;">📍 ${luogo.nome}</h3>
+                    <details open>
+                        <summary>La Scena <span>▼</span></summary>
+                        <div class="read-aloud">"${luogo.testo}"</div>
+                        <div class="dm-note"><strong>Note DM:</strong><br>${luogo.note}</div>
+                    </details>
+                </div>`;
+            });
+            document.getElementById('luoghi-content').innerHTML = luoghiHtml;
+
+            // RENDER INCONTRI E MOSTRI
+            let mostriHtml = "";
+            adv.incontri.forEach((incontro, incIdx) => {
+                
+                // Preparo i dati per il lancio Iniziativa di gruppo di questa stanza
+                let nomiInit = []; let hpInit = []; let initInit = [];
+                incontro.mostri.forEach(m => {
+                    let qty = m.quantita || 1;
+                    for(let i=1; i<=qty; i++) {
+                        nomiInit.push(`'${m.nome}${qty > 1 ? " " + i : ""}'`);
+                        hpInit.push(m.hp);
+                        initInit.push(m.init_bonus || 0);
+                    }
+                });
+
+                mostriHtml += `<div class="encounter-header">
+                    <h3 style="margin:0; color:var(--danger-color);">${incontro.titolo_incontro}</h3>
+                    <button class="btn-primary" style="margin-top:10px;" onclick="autoAddInit([${nomiInit.join(",")}], [${hpInit.join(",")}], [${initInit.join(",")}])">
+                    🎲 Tira Iniziativa Gruppo
+                    </button>
+                </div>`;
+
+                incontro.mostri.forEach(mostro => {
+                    let statsHtml = mostro.stats ? `<div class="monster-attributes">
+                        <div class="attr-box">FOR<strong>${mostro.stats.FOR}</strong></div><div class="attr-box">DES<strong>${mostro.stats.DES}</strong></div><div class="attr-box">COS<strong>${mostro.stats.COS}</strong></div>
+                        <div class="attr-box">INT<strong>${mostro.stats.INT}</strong></div><div class="attr-box">SAG<strong>${mostro.stats.SAG}</strong></div><div class="attr-box">CAR<strong>${mostro.stats.CAR}</strong></div>
+                    </div>` : '';
+                    
+                    let trattiHtml = mostro.percezione_passiva ? `<div style="font-size:12px; margin-bottom:10px; color:#ccc;">👁️ Passiva: <strong>${mostro.percezione_passiva}</strong></div>` : '';
+                    if(mostro.tratti) {
+                        trattiHtml += `<div class="monster-traits">` + mostro.tratti.map(t => `<div style="margin-bottom:4px;"><strong>${t.nome}:</strong> ${t.descrizione}</div>`).join('') + `</div>`;
+                    }
+
+                    let attacchiHtml = mostro.attacchi.map(atk => `<div class="attack-card">
+                        <strong>⚔️ ${atk.nome}</strong>
+                        <div class="attack-actions" style="margin-top:5px;">
+                            <button class="action-btn btn-hit" onclick="dmRoll('${atk.nome}', ${atk.txc})">🎯 TxC (+${atk.txc})</button>
+                            <button class="action-btn btn-dmg" onclick="dmDamage('${atk.nome}', '${atk.danni}')">💥 Danni (${atk.danni})</button>
+                        </div>
+                    </div>`).join('');
+                        
+                    let titoloMostro = mostro.quantita > 1 ? `${mostro.nome} (x${mostro.quantita})` : mostro.nome;
+
+                    mostriHtml += `<div class="card monster-card">
+                        <div class="monster-header"><h3 style="margin:0;">${titoloMostro}</h3><div class="monster-stats"><span>CA: <strong>${mostro.ca}</strong></span><span>HP: <strong>${mostro.hp}</strong></span></div></div>
+                        ${statsHtml}${trattiHtml}${attacchiHtml}
+                    </div>`;
+                });
+            });
+            document.getElementById('mostri-content').innerHTML = mostriHtml;
+
+            // RENDER NEGOZIO
+            if (adv.negozio && adv.negozio.oggetti) {
+                let itemHtml = adv.negozio.oggetti.map(item => `<div class="shop-item"><span>${item.nome}</span><span class="shop-price">${item.prezzo}</span></div>`).join('');
+                document.getElementById('negozio-content').innerHTML = `<div class="card"><h3 style="margin-top:0;">⚖️ ${adv.negozio.nome}</h3>${itemHtml}</div>`;
+            }
+
+            switchTab('sec-luoghi'); // Sposta alla prima tab utile
+        }
+
+        // ==========================================
+        // LOGICA COMBATTIMENTO E DADI
+        // ==========================================
+        function autoAddInit(names, hps, initBonuses) {
+            names.forEach((name, i) => { initiativeList.push({ name: name, score: Math.floor(Math.random() * 20) + 1 + initBonuses[i], hp: hps[i] }); });
+            initiativeList.sort((a, b) => b.score - a.score); renderInitiative(); alert(`Tirati i dadi per ${names.length} nemici e inseriti nel tracker!`); switchTab('sec-iniziativa');
+        }
+        function addInitiative() {
+            const name = document.getElementById('init-name').value; const score = parseInt(document.getElementById('init-score').value); const hp = parseInt(document.getElementById('init-hp').value) || 0;
+            if(!name || isNaN(score)) return alert("Inserisci Nome e Iniziativa!");
+            initiativeList.push({ name, score, hp }); initiativeList.sort((a, b) => b.score - a.score);
+            document.getElementById('init-name').value = ''; document.getElementById('init-score').value = ''; document.getElementById('init-hp').value = ''; renderInitiative();
+        }
+        function changeInitHP(index, amount) { initiativeList[index].hp += amount; if(initiativeList[index].hp < 0) initiativeList[index].hp = 0; renderInitiative(); }
+        function removeInitiative(index) { initiativeList.splice(index, 1); if(activeTurnIndex >= initiativeList.length) activeTurnIndex = 0; renderInitiative(); }
+        function nextTurn() { if(initiativeList.length === 0) return; activeTurnIndex++; if(activeTurnIndex >= initiativeList.length) { activeTurnIndex = 0; currentRound++; document.getElementById('round-counter').innerText = `Round ${currentRound}`; } renderInitiative(); }
+        function clearInitiative() { if(confirm("Svuotare l'iniziativa?")) { initiativeList = []; activeTurnIndex = 0; currentRound = 1; document.getElementById('round-counter').innerText = `Round 1`; renderInitiative(); } }
+        function renderInitiative() {
+            const container = document.getElementById('initiative-list');
+            if(initiativeList.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); text-align:center;">Nessuno in combattimento.</p>'; return; }
+            container.innerHTML = initiativeList.map((ent, i) => `
+                <div class="init-row ${i === activeTurnIndex ? 'active-turn' : ''}">
+                    <div class="init-score">${ent.score}</div>
+                    <div class="init-name">${ent.name}</div>
+                    <div class="init-hp-controls">
+                        <button class="hp-btn" onclick="changeInitHP(${i}, -1)">-</button><span style="width:25px; text-align:center;">${ent.hp}</span>
+                        <button class="hp-btn" onclick="changeInitHP(${i}, 1)">+</button>
+                        <button class="hp-btn" style="background:var(--danger-color); margin-left:10px;" onclick="removeInitiative(${i})">X</button>
+                    </div>
+                </div>`).join('');
+        }
+        function updateDMScreen(label, value, subtext, critClass="") {
+            document.getElementById(`dm-result-label`).innerText = label; document.getElementById(`dm-result-value`).innerText = value;
+            document.getElementById(`dm-result-crit`).innerHTML = critClass ? `<span class="${critClass}">${subtext}</span>` : subtext; document.getElementById('dice-result').innerText = value;
+        }
+        function logDice(title, result, subtext, color="var(--danger-color)") {
+            const time = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+            rollHistory.unshift(`<strong style="color:${color}">${title}</strong><br>Risultato: <b style="font-size:18px;">${result}</b> <span style="font-size:11px; color:#777;">(${subtext})</span><div style="color:#777; font-size:11px; text-align:right;">${time}</div>`);
+            if (rollHistory.length > 10) rollHistory.pop(); document.getElementById('dice-log').innerHTML = rollHistory.map(log => `<li>${log}</li>`).join('');
+        }
+        function dmRoll(name, mod) {
+            const d20 = Math.floor(Math.random() * 20) + 1; const total = d20 + mod; lastAttackWasCrit = (d20 === 20);
+            let critClass = "", screenSub = `d20: ${d20} + ${mod}`; document.getElementById('dm-result-crit').style.color = "#ffd700";
+            if (d20 === 20) { critClass = "crit-text"; screenSub = "CRITICO MINACCIA!"; } if (d20 === 1) { critClass = "crit-text"; screenSub = "MANCATO CLAMOROSO!"; document.getElementById('dm-result-crit').style.color = "var(--danger-color)"; }
+            logDice(`🎯 ${name}`, total, screenSub); updateDMScreen(`TxC: ${name}`, total, screenSub, critClass);
+        }
+        function dmDamage(name, diceStr) {
+            let total = 0, logs = []; const match = diceString = diceStr.match(/(\d+)d(\d+)(?:\s*([+-])\s*(\d+))?/);
+            if(match) {
+                let diceCount = parseInt(match[1]); if(lastAttackWasCrit) diceCount *= 2;
+                for(let i=0; i<diceCount; i++) { let r = Math.floor(Math.random() * parseInt(match[2]))+1; total += r; logs.push(r); }
+                if(match[3] && match[4]) { let flat = parseInt(match[4]); if(match[3]==='+') total += flat; else total -= flat; logs.push(match[3]+flat); }
+            } else { total = parseInt(diceStr)||0; if(lastAttackWasCrit) total*=2; logs.push(total); }
+            logDice(`💥 ${name}`, total, logs.join(' '), "var(--danger-color)"); updateDMScreen(`Danno: ${name}`, total, lastAttackWasCrit ? "CRITICO APPLICATO!" : "Danno normale", lastAttackWasCrit ? 'crit-text' : ''); lastAttackWasCrit = false;
+        }
+        function rollSimpleDice(sides) { const r = Math.floor(Math.random() * sides) + 1; document.getElementById('dice-result').innerText = r; logDice(`🎲 d${sides}`, r, `DM Roll`, "var(--text-color)"); }
+    </script>
+</body>
+</html>
