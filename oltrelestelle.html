@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Schermo del DM - Oltre Le Stelle</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1e1e1e;
+            --primary-color: #bb86fc;
+            --secondary-color: #03dac6;
+            --danger-color: #cf6679;
+            --warning-color: #f6e05e;
+            --text-color: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --border-radius: 12px;
+        }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 0; padding-bottom: 90px; }
+        header { background-color: var(--surface-color); padding: 20px; text-align: center; border-bottom: 1px solid #333; }
+        header h1 { margin: 0; font-size: 24px; color: var(--danger-color); display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .party-level { font-size: 14px; color: var(--text-muted); margin-top: 5px; display: block; }
+
+        .section { display: none; padding: 15px; animation: fadeIn 0.3s; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card { background-color: var(--surface-color); border-radius: var(--border-radius); padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        
+        input { width: 100%; background: #2c2c2c; border: 1px solid #444; color: white; padding: 10px; margin-bottom: 10px; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+        .btn-primary { width: 100%; background-color: var(--primary-color); color: #000; font-weight: bold; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .btn-danger { background-color: var(--danger-color); color: #000; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .btn-secondary { background-color: var(--secondary-color); color: #000; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .encounter-header { background: #2c2c2c; padding: 10px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid var(--danger-color); }
+
+        .init-row { display: flex; justify-content: space-between; align-items: center; background: #2c2c2c; padding: 10px; margin-bottom: 8px; border-radius: 8px; border-left: 4px solid transparent; }
+        .init-row.active-turn { border-left-color: var(--secondary-color); background: #333; box-shadow: 0 0 10px rgba(3, 218, 198, 0.2); }
+        .init-score { font-weight: bold; color: var(--primary-color); width: 30px; text-align: center; font-size: 18px; }
+        .init-name { flex: 1; font-weight: bold; padding-left: 10px; }
+        .init-hp-controls { display: flex; align-items: center; gap: 5px; }
+        .hp-btn { background: #444; color: white; border: none; border-radius: 4px; width: 25px; height: 25px; cursor: pointer; font-weight: bold; }
+        .init-controls { display: flex; gap: 10px; margin-top: 15px; }
+
+        .display-screen { text-align: center; padding: 15px; background: #000; border: 2px solid #333; border-radius: 8px; margin-bottom: 15px; }
+        .display-screen h2 { margin: 5px 0 0 0; font-size: 38px; color: var(--danger-color); }
+        .display-screen .crit-text { font-size: 14px; color: #ffd700; display: block; margin-top: 5px; font-weight: bold; }
+
+        .monster-card { border: 1px solid #444; border-left: 3px solid var(--danger-color); }
+        .monster-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        .monster-stats { display: flex; gap: 15px; font-size: 12px; color: var(--text-muted); }
+        .monster-stats strong { color: white; font-size: 14px; }
+        .monster-attributes { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; margin: 10px 0; text-align: center; }
+        .attr-box { background: #333; padding: 4px; border-radius: 4px; font-size: 10px; color: var(--text-muted); }
+        .attr-box strong { display: block; font-size: 14px; color: var(--secondary-color); margin-top: 2px; }
+        .monster-traits { font-size: 12px; color: #ccc; margin-bottom: 10px; padding: 8px; background: rgba(0,0,0,0.2); border-left: 2px solid var(--warning-color); }
+        .monster-traits strong { color: var(--warning-color); }
+
+        .attack-card { background-color: #2c2c2c; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+        .attack-actions { display: flex; gap: 5px; margin-top: 10px; }
+        .action-btn { flex: 1; padding: 8px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; }
+        .btn-hit { background-color: var(--primary-color); color: #000; }
+        .btn-dmg { background-color: var(--danger-color); color: #000; }
+
+        details { background-color: #2c2c2c; border-radius: 8px; margin-bottom: 10px; padding: 10px; }
+        summary { font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        summary::-webkit-details-marker { display: none; }
+        .read-aloud { background: rgba(187, 134, 252, 0.1); border-left: 3px solid var(--primary-color); padding: 10px; font-style: italic; color: #d0b3ff; margin-top: 10px; font-size: 14px; }
+        .dm-note { font-size: 13px; color: #ccc; margin-top: 10px; border-top: 1px dashed #555; padding-top: 10px;}
+
+        .shop-item { display: flex; justify-content: space-between; border-bottom: 1px dashed #444; padding: 10px 0; }
+        .shop-price { color: var(--warning-color); font-weight: bold; }
+
+        .dice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .dice-btn { background-color: #2c2c2c; color: var(--text-color); border: 2px solid var(--danger-color); border-radius: 8px; padding: 15px 0; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .dice-btn:active { background-color: var(--danger-color); color: #fff; }
+        #dice-log { list-style: none; padding: 0; margin: 0; font-size: 14px; color: var(--text-muted); }
+        #dice-log li { padding: 8px 0; border-bottom: 1px dashed #333; }
+
+        nav { position: fixed; bottom: 0; width: 100%; background-color: var(--surface-color); display: flex; padding: 8px 0; border-top: 1px solid #333; z-index: 1000; }
+        nav button { background: none; border: none; color: var(--text-muted); font-size: 10px; font-weight: 600; display: flex; flex-direction: column; align-items: center; padding: 5px 2px; cursor: pointer; flex: 1; }
+        nav button.active { color: var(--danger-color); background-color: rgba(207, 102, 121, 0.1); border-radius: 8px; }
+        nav button i { font-size: 20px; margin-bottom: 4px; font-style: normal; }
+    </style>
+</head>
+<body onload="caricaAvventura('oltre_le_stelle')">
+
+    <header>
+        <h1>🐉 Dietro lo Schermo</h1>
+        <span class="party-level">Avventura: <strong id="adv-title">Caricamento...</strong></span>
+    </header>
+
+    <!-- SEZIONE INIZIATIVA -->
+    <div id="sec-iniziativa" class="section">
+        <div class="card">
+            <h3 style="margin-top:0;">Aggiungi Eroe</h3>
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="init-name" placeholder="Nome Eroe" style="flex:2;">
+                <input type="number" id="init-score" placeholder="Iniz" style="flex:1;">
+                <input type="number" id="init-hp" placeholder="HP" style="flex:1;">
+            </div>
+            <button class="btn-primary" onclick="addInitiative()">➕ Aggiungi al Turno</button>
+        </div>
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin:0;">Ordine di Turno</h3>
+                <span id="round-counter" style="color:var(--text-muted); font-size:12px;">Round 1</span>
+            </div>
+            <div id="initiative-list">
+                <p style="color:var(--text-muted); font-size:12px; text-align:center;">Nessuno in combattimento.</p>
+            </div>
+            <div class="init-controls">
+                <button class="btn-secondary" style="flex:2;" onclick="nextTurn()">⏭️ Prossimo Turno</button>
+                <button class="btn-danger" style="flex:1;" onclick="clearInitiative()">🗑️ Svuota</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEZIONE MOSTRI -->
+    <div id="sec-mostri" class="section">
+        <div class="display-screen">
+            <span id="dm-result-label">Tiro del Mostro</span>
+            <h2 id="dm-result-value">--</h2>
+            <div class="crit-text" id="dm-result-crit"></div>
+        </div>
+        <div id="mostri-content"><p style="color:var(--text-muted); text-align:center;">Nessun incontro caricato.</p></div>
+    </div>
+
+    <!-- SEZIONE LUOGHI / STORIA -->
+    <div id="sec-luoghi" class="section active">
+        <div id="luoghi-content"><p style="color:var(--text-muted); text-align:center;">Caricamento della storia in corso...</p></div>
+    </div>
+
+    <!-- SEZIONE NEGOZIO -->
+    <div id="sec-negozio" class="section">
+        <div id="negozio-content"><p style="color:var(--text-muted); text-align:center;">Nessun mercante qui.</p></div>
+    </div>
+
+    <!-- SEZIONE DADI -->
+    <div id="sec-dadi" class="section">
+        <div class="card">
+            <div class="display-screen">
+                <span style="font-size: 12px; color: var(--text-muted);">Lancio Nascosto (DM)</span>
+                <h2 id="dice-result">--</h2>
+            </div>
+            <div class="dice-grid">
+                <button class="dice-btn" onclick="rollSimpleDice(4)">d4</button>
+                <button class="dice-btn" onclick="rollSimpleDice(6)">d6</button>
+                <button class="dice-btn" onclick="rollSimpleDice(8)">d8</button>
+                <button class="dice-btn" onclick="rollSimpleDice(10)">d10</button>
+                <button class="dice-btn" onclick="rollSimpleDice(12)">d12</button>
+                <button class="dice-btn" onclick="rollSimpleDice(20)">d20</button>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Cronologia</h3>
+            <ul id="dice-log"><li>Nessun lancio effettuato.</li></ul>
+        </div>
+    </div>
+
+    <!-- SEZIONE NOTE -->
+    <div id="sec-note" class="section">
+        <div class="card">
+            <h3 style="margin-top: 0;">Appunti Segreti</h3>
+            <textarea id="dm-notes" style="width: 100%; height: 350px; background: #2c2c2c; color: white; border: 1px solid #444; padding: 12px; border-radius: 8px; box-sizing: border-box; resize: vertical;" placeholder="Scrivi qui i tuoi appunti della sessione..."></textarea>
+        </div>
+    </div>
+
+    <nav>
+        <button onclick="switchTab('sec-luoghi')" id="btn-sec-luoghi" class="active"><i>🗺️</i>Storia</button>
+        <button onclick="switchTab('sec-iniziativa')" id="btn-sec-iniziativa"><i>⏱️</i>Turni</button>
+        <button onclick="switchTab('sec-mostri')" id="btn-sec-mostri"><i>👹</i>Mostri</button>
+        <button onclick="switchTab('sec-negozio')" id="btn-sec-negozio"><i>💰</i>Shop</button>
+        <button onclick="switchTab('sec-dadi')" id="btn-sec-dadi"><i>🎲</i>Dadi</button>
+        <button onclick="switchTab('sec-note')" id="btn-sec-note"><i>📝</i>Note</button>
+    </nav>
+
+    <script>
+        // ==========================================
+        // DATABASE INTERNO AVVENTURA
+        // ==========================================
+        const dbAvventure = {
+            "oltre_le_stelle": {
+                "titolo": "Oltre Le Stelle (Liv. 5)",
+                "background": "Il sole sta tramontando quando raggiungete la Brughiera Grigia. Una foschia sottile avvolge i campi e le poche case del vicino villaggio sembrano rannicchiate l'una contro l'altra, come se cercassero riparo da qualcosa di invisibile. Varcati i cancelli, un odore di terra bagnata e vegetazione marcia aleggia nell'aria.",
+                "luoghi": [
+                    {
+                        "nome": "Capitolo 1: La Città",
+                        "testo": "Le persone vi osservano dalle finestre, silenziose. Un bambino si avvicina e vi sussurra: 'Di notte ho visto delle luci sopra i campi degli Alder. Non erano come il fuoco o le stelle... cambiavano sempre colore, ma non erano colori veri. Mi facevano male agli occhi. E quando le guardavo troppo a lungo, avevo l'impressione che anche loro stessero guardando me.'",
+                        "note": "- Persuasione CD 12: Gli abitanti spiegano che le provviste stanno marcendo per via di una maledizione.\n- Natura/Indagare CD 12: Piante deformi e assenza del canto degli uccelli.\n- Taverna: Edrik Alder (capo fattoria) non si vede da giorni.\n- Obiettivo: Dirigersi alla fattoria Alder."
+                    },
+                    {
+                        "nome": "Capitolo 2: Il Sentiero per la Fattoria",
+                        "testo": "Il sentiero si inoltra tra campi abbandonati. La vegetazione appare rigogliosa, ma c'è qualcosa di sbagliato nelle forme delle piante: steli troppo lunghi, foglie contorte, fiori dai colori innaturalmente vividi. Non sentite il canto degli uccelli. Solo il rumore dei vostri passi e un vento che sembra sussurrare parole in una lingua sconosciuta.",
+                        "note": "Avvicinandosi alla fattoria la tensione sale. Gli insetti sono giganteschi. Incontro in agguato: 4 Bestie Corrotte (Lupi deformati dall'energia aliena). Dopo il combattimento i PG trovano la porta socchiusa."
+                    },
+                    {
+                        "nome": "Capitolo 3: L'Interno della Casa",
+                        "testo": "L'aria è pesante e soffocante. Uno strato di polvere iridescente ricopre ogni superficie e brilla di colori impossibili. Le finestre sono sbarrate e ci sono porte graffiate dall'interno. Spostando una pesante credenza scoprite una botola. Scendendo, una corrente d'aria gelida sale dalle profondità, mentre in fondo alla cantina qualcosa pulsa lentamente.",
+                        "note": "Percezione CD 13 per notare che tutti gli animali evitano la casa ma puntano alla cantina. \nDentro la cantina c'è un cristallo alieno e il diario di Edrik. Guardare il cristallo richiede un TS Saggezza CD 13 (fallimento = svantaggio alla prossima prova a causa di visioni impossibili).\nAll'improvviso, compare Edrik trasformato in orrore. Inizia il combattimento."
+                    },
+                    {
+                        "nome": "Capitolo 4: Attraverso i Campi",
+                        "testo": "Mentre vi dirigete verso i campi, avvertite una vibrazione provenire da sotto i vostri piedi. Le piante iniziano a scuotersi violentemente... non per il vento. Si stanno muovendo verso di voi.",
+                        "note": "I campi prendono vita. I PG vengono accerchiati dall'Orda dei Coltivati. \nPercezione alta: I mostri non guardano i PG, ma un cratere alle loro spalle.\nSe un mostro cade nel cratere o se i PG ci si buttano, i Blight si fermano e smettono di attaccare."
+                    },
+                    {
+                        "nome": "Capitolo 5: Dal Cratere ad Oltre le Stelle",
+                        "testo": "Il terreno si apre in una depressione sterile. Una colonna di luce indescrivibile sale verso il cielo, contorcendosi come una ferita. Dalla luce si materializza una forma vagamente umanoide: una manifestazione della Volontà che si nasconde oltre il varco.",
+                        "note": "Fase 1: Combattimento contro l'Avatar Stellare.\nFase 2 (La Visione): Morto l'Avatar, tutti TS Saggezza CD 14 o 2d6 danni psichici per le visioni cosmiche, comprendendo che la creatura reale non può essere uccisa, il varco va chiuso.\nFase 3: Skill Challenge per chiudere il varco. 4 Successi prima di 3 Fallimenti (Arcana, Religione, Natura, Intuizione, Sopravvivenza - CD 14). \nEpilogo: In base all'esito della sfida, il varco si chiude del tutto o la creatura sceglie semplicemente di nascondersi... per ora."
+                    }
+                ],
+                "incontri": [
+                    {
+                        "titolo_incontro": "Agguato sul Sentiero (Cap. 2)",
+                        "mostri": [
+                            { 
+                                "nome": "Bestia Corrotta", "quantita": 4, "hp": 37, "ca": 14, "init_bonus": 2, 
+                                "percezione_passiva": 13,
+                                "stats": { "FOR": "+3", "DES": "+2", "COS": "+2", "INT": "-4", "SAG": "+1", "CAR": "-2" },
+                                "tratti": [
+                                    { "nome": "Tattiche di Branco", "descrizione": "Vantaggio ai TxC se un alleato è a 1,5m dal bersaglio." },
+                                    { "nome": "Mutazione Aliena", "descrizione": "Attacchi magici. Occhi che brillano di luce pulsante." }
+                                ],
+                                "attacchi": [{ "nome": "Morso Corrotto (CD 13 FOR o Prono)", "txc": 5, "danni": "2d6+3" }] 
+                            }
+                        ]
+                    },
+                    {
+                        "titolo_incontro": "L'Orrore in Cantina (Cap. 3)",
+                        "mostri": [
+                            { 
+                                "nome": "Edrik Mutato (Mini-Boss)", "quantita": 1, "hp": 65, "ca": 14, "init_bonus": 3, 
+                                "percezione_passiva": 11,
+                                "stats": { "FOR": "+2", "DES": "+3", "COS": "+2", "INT": "-1", "SAG": "+1", "CAR": "-1" },
+                                "tratti": [
+                                    { "nome": "Aura Luminosa", "descrizione": "Emette luce aliena per 3 metri di raggio." },
+                                    { "nome": "Resistenza Innaturale", "descrizione": "Danni contundenti, perforanti e taglienti da armi non magiche." }
+                                ],
+                                "attacchi": [
+                                    { "nome": "Multiattacco (1 Morso + 1 Artigli)", "txc": 0, "danni": "0" }, 
+                                    { "nome": "Morso Alieno", "txc": 5, "danni": "2d8+3" }, 
+                                    { "nome": "Artigli (TS COS 12 o Paralizzato 1 min)", "txc": 5, "danni": "2d6+3" }
+                                ] 
+                            }
+                        ]
+                    },
+                    {
+                        "titolo_incontro": "L'Orda dei Coltivati (Cap. 4)",
+                        "mostri": [
+                            { 
+                                "nome": "Piaga delle Viti", "quantita": 4, "hp": 22, "ca": 12, "init_bonus": -1, 
+                                "percezione_passiva": 10,
+                                "stats": { "FOR": "+2", "DES": "-1", "COS": "+2", "INT": "-3", "SAG": "+0", "CAR": "-4" },
+                                "tratti": [
+                                    { "nome": "Falsa Apparenza", "descrizione": "Immobile è indistinguibile da viti intrecciate." },
+                                    { "nome": "Passi Intreccianti", "descrizione": "Terreno difficile a 1,5m da lui. Entrarci: TS FOR 12 o Trattenuti." }
+                                ],
+                                "attacchi": [{ "nome": "Costrizione", "txc": 4, "danni": "1d6+2" }] 
+                            },
+                            { 
+                                "nome": "Piaga dei Rovi", "quantita": 4, "hp": 18, "ca": 13, "init_bonus": 1, 
+                                "percezione_passiva": 9,
+                                "stats": { "FOR": "+1", "DES": "+1", "COS": "+1", "INT": "-3", "SAG": "-1", "CAR": "-4" },
+                                "tratti": [
+                                    { "nome": "Vulnerabilità", "descrizione": "Prende danni doppi dal Fuoco." }
+                                ],
+                                "attacchi": [{ "nome": "Sbarramento Spine (Gitt. 9/18m)", "txc": 4, "danni": "2d4+1" }] 
+                            }
+                        ]
+                    },
+                    {
+                        "titolo_incontro": "La Volontà del Cristallo (Cap. 5)",
+                        "mostri": [
+                            { 
+                                "nome": "Avatar Stellare (Boss Finale)", "quantita": 1, "hp": 90, "ca": 15, "init_bonus": 3, 
+                                "percezione_passiva": 15,
+                                "stats": { "FOR": "+0", "DES": "+3", "COS": "+4", "INT": "+5", "SAG": "+2", "CAR": "+4" },
+                                "tratti": [
+                                    { "nome": "Natura Aliena", "descrizione": "Immunità: Charme, Spaventato, Danni Psichici." },
+                                    { "nome": "Risonanza Psichica", "descrizione": "Chi subisce danni vede immagini impossibili, subendo Svantaggio al prossimo TxC o TS." }
+                                ],
+                                "attacchi": [
+                                    { "nome": "Multiattacco (2 Raggi o 2 Tocchi)", "txc": 0, "danni": "0" }, 
+                                    { "nome": "Raggio Irreale (A Distanza)", "txc": 7, "danni": "2d8+4" },
+                                    { "nome": "Tocco Distorcente (Mischia)", "txc": 7, "danni": "2d6+4" }
+                                ] 
+                            }
+                        ]
+                    }
+                ],
+                "negozio": {
+                    "nome": "Scorte del Villico Terrorizzato",
+                    "oggetti": [
+                        { "nome": "Pozione di Guarigione Maggiore", "prezzo": "150 MO" },
+                        { "nome": "Acqua Santa (Fiala)", "prezzo": "25 MO" },
+                        { "nome": "Borsa del Guaritore", "prezzo": "10 MO" }
+                    ]
+                }
+            }
+        };
+
+        let initiativeList = []; let activeTurnIndex = 0; let currentRound = 1; let lastAttackWasCrit = false; let rollHistory = [];
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.getElementById('btn-' + tabId).classList.add('active');
+        }
+
+        function caricaAvventura(id_avventura) {
+            const adv = dbAvventure[id_avventura];
+            document.getElementById('adv-title').innerText = adv.titolo;
+
+            // RENDER STORIA
+            let luoghiHtml = `<div class="card" style="border: 1px solid var(--primary-color);">
+                <h3 style="margin-top:0;">📜 L'Arrivo</h3>
+                <div class="read-aloud">"${adv.background}"</div>
+            </div>`;
+            
+            adv.luoghi.forEach(luogo => {
+                luoghiHtml += `<div class="card">
+                    <h3 style="margin-top:0;">📍 ${luogo.nome}</h3>
+                    <details>
+                        <summary>La Scena <span>▼</span></summary>
+                        <div class="read-aloud">"${luogo.testo}"</div>
+                        <div class="dm-note"><strong>Note DM:</strong><br>${luogo.note.replace(/\n/g, '<br>')}</div>
+                    </details>
+                </div>`;
+            });
+            document.getElementById('luoghi-content').innerHTML = luoghiHtml;
+
+            // RENDER INCONTRI E MOSTRI
+            let mostriHtml = "";
+            adv.incontri.forEach((incontro) => {
+                
+                let nomiInit = []; let hpInit = []; let initInit = [];
+                incontro.mostri.forEach(m => {
+                    let qty = m.quantita || 1;
+                    for(let i=1; i<=qty; i++) {
+                        nomiInit.push(`'${m.nome}${qty > 1 ? " " + i : ""}'`);
+                        hpInit.push(m.hp);
+                        initInit.push(m.init_bonus || 0);
+                    }
+                });
+
+                mostriHtml += `<div class="encounter-header">
+                    <h3 style="margin:0; color:var(--danger-color);">${incontro.titolo_incontro}</h3>
+                    <button class="btn-primary" style="margin-top:10px;" onclick="autoAddInit([${nomiInit.join(",")}], [${hpInit.join(",")}], [${initInit.join(",")}])">
+                    🎲 Tira Iniziativa Gruppo
+                    </button>
+                </div>`;
+
+                incontro.mostri.forEach(mostro => {
+                    let statsHtml = mostro.stats ? `<div class="monster-attributes">
+                        <div class="attr-box">FOR<strong>${mostro.stats.FOR}</strong></div><div class="attr-box">DES<strong>${mostro.stats.DES}</strong></div><div class="attr-box">COS<strong>${mostro.stats.COS}</strong></div>
+                        <div class="attr-box">INT<strong>${mostro.stats.INT}</strong></div><div class="attr-box">SAG<strong>${mostro.stats.SAG}</strong></div><div class="attr-box">CAR<strong>${mostro.stats.CAR}</strong></div>
+                    </div>` : '';
+                    
+                    let trattiHtml = mostro.percezione_passiva ? `<div style="font-size:12px; margin-bottom:10px; color:#ccc;">👁️ Passiva: <strong>${mostro.percezione_passiva}</strong></div>` : '';
+                    if(mostro.tratti) {
+                        trattiHtml += `<div class="monster-traits">` + mostro.tratti.map(t => `<div style="margin-bottom:4px;"><strong>${t.nome}:</strong> ${t.descrizione}</div>`).join('') + `</div>`;
+                    }
+
+                    let attacchiHtml = mostro.attacchi.map(atk => `<div class="attack-card">
+                        <strong>⚔️ ${atk.nome}</strong>
+                        <div class="attack-actions" style="margin-top:5px;">
+                            <button class="action-btn btn-hit" onclick="dmRoll('${atk.nome}', ${atk.txc})">🎯 TxC (+${atk.txc})</button>
+                            <button class="action-btn btn-dmg" onclick="dmDamage('${atk.nome}', '${atk.danni}')">💥 Danni (${atk.danni})</button>
+                        </div>
+                    </div>`).join('');
+                        
+                    let titoloMostro = mostro.quantita > 1 ? `${mostro.nome} (x${mostro.quantita})` : mostro.nome;
+
+                    mostriHtml += `<div class="card monster-card">
+                        <div class="monster-header"><h3 style="margin:0;">${titoloMostro}</h3><div class="monster-stats"><span>CA: <strong>${mostro.ca}</strong></span><span>HP: <strong>${mostro.hp}</strong></span></div></div>
+                        ${statsHtml}${trattiHtml}${attacchiHtml}
+                    </div>`;
+                });
+            });
+            document.getElementById('mostri-content').innerHTML = mostriHtml;
+
+            // RENDER NEGOZIO
+            if (adv.negozio && adv.negozio.oggetti) {
+                let itemHtml = adv.negozio.oggetti.map(item => `<div class="shop-item"><span>${item.nome}</span><span class="shop-price">${item.prezzo}</span></div>`).join('');
+                document.getElementById('negozio-content').innerHTML = `<div class="card"><h3 style="margin-top:0;">⚖️ ${adv.negozio.nome}</h3>${itemHtml}</div>`;
+            }
+        }
+
+        // ==========================================
+        // LOGICA COMBATTIMENTO E DADI
+        // ==========================================
+        function autoAddInit(names, hps, initBonuses) {
+            names.forEach((name, i) => { initiativeList.push({ name: name, score: Math.floor(Math.random() * 20) + 1 + initBonuses[i], hp: hps[i] }); });
+            initiativeList.sort((a, b) => b.score - a.score); renderInitiative(); alert(`Tirati i dadi per ${names.length} nemici e inseriti nel tracker!`); switchTab('sec-iniziativa');
+        }
+        function addInitiative() {
+            const name = document.getElementById('init-name').value; const score = parseInt(document.getElementById('init-score').value); const hp = parseInt(document.getElementById('init-hp').value) || 0;
+            if(!name || isNaN(score)) return alert("Inserisci Nome e Iniziativa!");
+            initiativeList.push({ name, score, hp }); initiativeList.sort((a, b) => b.score - a.score);
+            document.getElementById('init-name').value = ''; document.getElementById('init-score').value = ''; document.getElementById('init-hp').value = ''; renderInitiative();
+        }
+        function changeInitHP(index, amount) { initiativeList[index].hp += amount; if(initiativeList[index].hp < 0) initiativeList[index].hp = 0; renderInitiative(); }
+        function removeInitiative(index) { initiativeList.splice(index, 1); if(activeTurnIndex >= initiativeList.length) activeTurnIndex = 0; renderInitiative(); }
+        function nextTurn() { if(initiativeList.length === 0) return; activeTurnIndex++; if(activeTurnIndex >= initiativeList.length) { activeTurnIndex = 0; currentRound++; document.getElementById('round-counter').innerText = `Round ${currentRound}`; } renderInitiative(); }
+        function clearInitiative() { if(confirm("Svuotare l'iniziativa?")) { initiativeList = []; activeTurnIndex = 0; currentRound = 1; document.getElementById('round-counter').innerText = `Round 1`; renderInitiative(); } }
+        function renderInitiative() {
+            const container = document.getElementById('initiative-list');
+            if(initiativeList.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); text-align:center;">Nessuno in combattimento.</p>'; return; }
+            container.innerHTML = initiativeList.map((ent, i) => `
+                <div class="init-row ${i === activeTurnIndex ? 'active-turn' : ''}">
+                    <div class="init-score">${ent.score}</div>
+                    <div class="init-name">${ent.name}</div>
+                    <div class="init-hp-controls">
+                        <button class="hp-btn" onclick="changeInitHP(${i}, -1)">-</button><span style="width:25px; text-align:center;">${ent.hp}</span>
+                        <button class="hp-btn" onclick="changeInitHP(${i}, 1)">+</button>
+                        <button class="hp-btn" style="background:var(--danger-color); margin-left:10px;" onclick="removeInitiative(${i})">X</button>
+                    </div>
+                </div>`).join('');
+        }
+        function updateDMScreen(label, value, subtext, critClass="") {
+            document.getElementById(`dm-result-label`).innerText = label; document.getElementById(`dm-result-value`).innerText = value;
+            document.getElementById(`dm-result-crit`).innerHTML = critClass ? `<span class="${critClass}">${subtext}</span>` : subtext; document.getElementById('dice-result').innerText = value;
+        }
+        function logDice(title, result, subtext, color="var(--danger-color)") {
+            const time = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+            rollHistory.unshift(`<strong style="color:${color}">${title}</strong><br>Risultato: <b style="font-size:18px;">${result}</b> <span style="font-size:11px; color:#777;">(${subtext})</span><div style="color:#777; font-size:11px; text-align:right;">${time}</div>`);
+            if (rollHistory.length > 10) rollHistory.pop(); document.getElementById('dice-log').innerHTML = rollHistory.map(log => `<li>${log}</li>`).join('');
+        }
+        function dmRoll(name, mod) {
+            const d20 = Math.floor(Math.random() * 20) + 1; const total = d20 + mod; lastAttackWasCrit = (d20 === 20);
+            let critClass = "", screenSub = `d20: ${d20} + ${mod}`; document.getElementById('dm-result-crit').style.color = "#ffd700";
+            if (d20 === 20) { critClass = "crit-text"; screenSub = "CRITICO MINACCIA!"; } if (d20 === 1) { critClass = "crit-text"; screenSub = "MANCATO CLAMOROSO!"; document.getElementById('dm-result-crit').style.color = "var(--danger-color)"; }
+            logDice(`🎯 ${name}`, total, screenSub); updateDMScreen(`TxC: ${name}`, total, screenSub, critClass);
+        }
+        function dmDamage(name, diceStr) {
+            if (diceStr === "0") { logDice(`💥 ${name}`, 0, "Nessun danno diretto", "var(--text-muted)"); return; }
+            let total = 0, logs = []; const match = diceString = diceStr.match(/(\d+)d(\d+)(?:\s*([+-])\s*(\d+))?/);
+            if(match) {
+                let diceCount = parseInt(match[1]); if(lastAttackWasCrit) diceCount *= 2;
+                for(let i=0; i<diceCount; i++) { let r = Math.floor(Math.random() * parseInt(match[2]))+1; total += r; logs.push(r); }
+                if(match[3] && match[4]) { let flat = parseInt(match[4]); if(match[3]==='+') total += flat; else total -= flat; logs.push(match[3]+flat); }
+            } else { total = parseInt(diceStr)||0; if(lastAttackWasCrit) total*=2; logs.push(total); }
+            logDice(`💥 ${name}`, total, logs.join(' '), "var(--danger-color)"); updateDMScreen(`Danno: ${name}`, total, lastAttackWasCrit ? "CRITICO APPLICATO!" : "Danno normale", lastAttackWasCrit ? 'crit-text' : ''); lastAttackWasCrit = false;
+        }
+        function rollSimpleDice(sides) { const r = Math.floor(Math.random() * sides) + 1; document.getElementById('dice-result').innerText = r; logDice(`🎲 d${sides}`, r, `DM Roll`, "var(--text-color)"); }
+    </script>
+</body>
+</html>
