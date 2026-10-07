@@ -437,27 +437,34 @@
         const storageKey = 'dnd_save_' + characterData.name.replace(/\s+/g, '_');
 
         function loadSavedData() {
-            const saved = localStorage.getItem(storageKey);
-            if (saved) {
+            try {
+                const saved = localStorage.getItem(storageKey);
+                if (!saved) return;
+                
                 const parsed = JSON.parse(saved);
                 if (parsed.ac !== undefined) characterData.ac = parsed.ac;
                 if (parsed.hpCurrent !== undefined) characterData.hpCurrent = parsed.hpCurrent;
-                if (parsed.inventory) characterData.inventory = parsed.inventory;
+                if (Array.isArray(parsed.inventory)) characterData.inventory = parsed.inventory;
                 if (parsed.inspiration !== undefined) characterData.inspiration = parsed.inspiration;
                 if (parsed.spellSlots) characterData.spellSlots = parsed.spellSlots;
                 if (parsed.hitDiceUsed !== undefined) characterData.hitDiceUsed = parsed.hitDiceUsed;
                 if (parsed.currency) characterData.currency = parsed.currency;
                 
-                if (parsed.spells) {
+                if (Array.isArray(parsed.spells)) {
                     parsed.spells.forEach((l, lIdx) => {
-                        l.items.forEach((s, sIdx) => {
-                            if(characterData.spells[lIdx] && characterData.spells[lIdx].items[sIdx]) {
-                                characterData.spells[lIdx].items[sIdx].prepared = s.prepared;
-                            }
-                        });
+                        if (l && Array.isArray(l.items)) {
+                            l.items.forEach((s, sIdx) => {
+                                if(characterData.spells[lIdx] && characterData.spells[lIdx].items && characterData.spells[lIdx].items[sIdx]) {
+                                    characterData.spells[lIdx].items[sIdx].prepared = s.prepared;
+                                }
+                            });
+                        }
                     });
                 }
                 if (parsed.notes) document.getElementById('session-notes').value = parsed.notes;
+            } catch(e) {
+                console.error("Errore fatale in memoria, reset...", e);
+                localStorage.removeItem(storageKey);
             }
         }
 
@@ -477,7 +484,7 @@
         }
 
         function resetData() {
-            if(confirm("Sei sicuro di voler resettare tutti i dati del telefono?")) {
+            if(confirm("Sei sicuro di voler resettare tutti i dati salvati? Questo eliminerà l'equipaggiamento e i danni subiti.")) {
                 localStorage.removeItem(storageKey);
                 location.reload(); 
             }
@@ -808,4 +815,126 @@
             }).join('');
 
             let hdHtml = '<span style="font-size: 12px; color: var(--text-muted); margin-right: 10px;">DADI VITA:</span>';
-            for(let i=0; i<characterData.level; i++) hdHtml +=
+            for(let i=0; i<characterData.level; i++) hdHtml += `<span class="hd-icon ${i < (characterData.level - characterData.hitDiceUsed) ? 'available' : ''}">🎲</span>`;
+            document.getElementById('hd-container').innerHTML = hdHtml;
+
+            // RENDERING BATTAGLIA - ARMI
+            let baseAttacksHtml = characterData.battleAttacks.length > 0 ? characterData.battleAttacks.map((atk, i) => `<div class="attack-card"><div class="attack-header"><span class="attack-name">⚔️ ${atk.name}</span><span class="attack-stats">TxC: ${atk.atk} | Danni: ${atk.dmg}</span></div><div class="attack-actions"><button class="action-btn btn-hit" onclick="rollAttack(false, ${i})">🎯 Colpire</button><button class="action-btn btn-dmg" onclick="rollDamage(false, ${i})">💥 Danno</button></div></div>`).join('') : '';
+            let invAtkHtml = "", invPotHtml = "", hasPot = false, hasWeapon = baseAttacksHtml !== '';
+            
+            characterData.inventory.forEach((item, i) => {
+                if (item.type === 'weapon' || item.atk || item.dmg) {
+                    hasWeapon = true;
+                    invAtkHtml += `<div class="attack-card" style="border-color: var(--secondary-color);"><div class="attack-header"><span class="attack-name">🎒 ${item.name}</span><span class="attack-stats">TxC: ${item.atk||'+0'} | Danni: ${item.dmg||'0'}</span></div><div class="attack-actions"><button class="action-btn btn-hit" onclick="rollAttack(true, ${i})">🎯 Colpire</button><button class="action-btn btn-dmg" onclick="rollDamage(true, ${i})">💥 Danno</button></div></div>`;
+                } else if (item.type === 'potion') {
+                    hasPot = true;
+                    invPotHtml += `<div class="attack-card" style="border-color: var(--secondary-color);"><div class="attack-header"><span class="attack-name">🧪 ${item.name} <span style="background:var(--secondary-color); color:#000; padding:2px 6px; border-radius:12px; font-size:10px;">x${item.qty}</span></span><span class="attack-stats">Cura: ${item.heal||'0'}</span></div><div class="attack-actions"><button class="action-btn btn-heal" onclick="usePotion(${i})">💊 Bevi Pozione</button></div></div>`;
+                }
+            });
+
+            if (!hasWeapon) { 
+                document.getElementById('battle-weapons-container').innerHTML = `<p style="color:var(--text-muted); font-size:12px; text-align:center;">Nessun attacco fisico registrato.</p>`; 
+            } else { 
+                document.getElementById('battle-weapons-container').innerHTML = baseAttacksHtml + invAtkHtml; 
+            }
+
+            // RENDERING BATTAGLIA - INCANTESIMI PREPARATI
+            let spellAtkHtml = "";
+            let hasCombatSpells = false;
+            
+            characterData.spells.forEach((group, lIdx) => {
+                let levelHtml = "";
+                let levelHasSpells = false;
+                
+                group.items.forEach((spell, sIdx) => {
+                    if (spell.prepared && (spell.atk || spell.dmg || spell.heal)) {
+                        hasCombatSpells = true;
+                        levelHasSpells = true;
+                        let atkBtn = spell.atk ? `<button class="action-btn btn-hit" onclick="rollSpellAttack(${lIdx}, ${sIdx})">🎯 Attacco</button>` : '';
+                        let dmgBtn = spell.dmg ? `<button class="action-btn btn-dmg" onclick="rollSpellDamage(${lIdx}, ${sIdx})">💥 Danno</button>` : '';
+                        let healBtn = spell.heal ? `<button class="action-btn btn-heal" onclick="rollSpellHeal(${lIdx}, ${sIdx})">💊 Cura</button>` : '';
+                        
+                        levelHtml += `
+                        <div class="attack-card" style="border-color: var(--primary-color);">
+                            <div class="attack-header">
+                                <span class="attack-name">✨ ${spell.name}</span>
+                                <span class="attack-stats">${spell.atk ? 'TxC: '+spell.atk : ''} ${spell.dmg ? '| Danno: '+spell.dmg : ''} ${spell.heal ? '| Cura: '+spell.heal : ''}</span>
+                            </div>
+                            <div class="attack-actions">${atkBtn}${dmgBtn}${healBtn}</div>
+                        </div>`;
+                    }
+                });
+
+                if (levelHasSpells) {
+                    spellAtkHtml += `<div style="font-size: 13px; font-weight: bold; color: var(--primary-color); margin: 15px 0 8px 0; border-bottom: 1px dashed #444; padding-bottom: 4px;">-- ${group.level} --</div>` + levelHtml;
+                }
+            });
+            
+            if (hasCombatSpells) {
+                document.getElementById('battle-spells-container').innerHTML = spellAtkHtml;
+                document.getElementById('battle-spells-card').style.display = 'block';
+            } else {
+                document.getElementById('battle-spells-container').innerHTML = '';
+                document.getElementById('battle-spells-card').style.display = 'none';
+            }
+            
+            document.getElementById('battle-potions-list').innerHTML = invPotHtml;
+            document.getElementById('battle-potions-container').style.display = hasPot ? 'block' : 'none';
+
+            // INVENTARIO
+            if (characterData.inventory.length === 0) {
+                document.getElementById('inventory-container').innerHTML = `<p style="color:var(--text-muted); font-size:12px; text-align:center;">Zaino vuoto.</p>`;
+            } else {
+                document.getElementById('inventory-container').innerHTML = characterData.inventory.map((item, i) => {
+                    let badge = item.type === 'weapon' ? '⚔' : (item.type === 'potion' ? '🧪' : (item.type === 'armor' ? '🛡️' : '🎒'));
+                    
+                    let actionsHtml = '';
+                    if (item.type === 'potion') {
+                        actionsHtml = `<button onclick="usePotion(${i})" style="background:var(--secondary-color); color:#000; border:none; padding:5px; border-radius:4px; font-weight:bold; cursor:pointer; flex:1;">Usa (x${item.qty})</button>`;
+                    } else if (item.type === 'armor') {
+                        let btnColor = item.equipped ? 'var(--danger-color)' : 'var(--secondary-color)';
+                        let btnText = item.equipped ? 'Rimuovi Armatura' : 'Equipaggia';
+                        actionsHtml = `<button onclick="toggleEquip(${i})" style="background:${btnColor}; color:#000; border:none; padding:5px; border-radius:4px; font-weight:bold; cursor:pointer; flex:1;">${btnText}</button>`;
+                    }
+                    
+                    let deleteBtn = `<button onclick="deleteInventoryItem(${i})" style="background:transparent; color:var(--danger-color); border:1px solid var(--danger-color); padding:5px; border-radius:4px; font-weight:bold; cursor:pointer; flex:1;">🗑️ Elimina</button>`;
+
+                    let btnContainer = `<div style="display:flex; gap:10px; margin-top:10px;">${actionsHtml}${deleteBtn}</div>`;
+
+                    return `<details><summary>${badge} ${item.name} ${item.qty > 1 ? `x${item.qty}` : ''}</summary><div class="details-content">${item.atk ? `<strong>Attacco:</strong> ${item.atk}<br>` : ''}${item.dmg ? `<strong>Danno:</strong> ${item.dmg}<br>` : ''}${item.acBonus ? `<strong>Bonus CA:</strong> +${item.acBonus}<br>` : ''}${item.heal ? `<strong>Cura:</strong> ${item.heal}<br>` : ''}${item.desc ? `<em>${item.desc}</em><br>` : ''}${btnContainer}</div></details>`;
+                }).join('');
+            }
+
+            // TRATTI
+            if (characterData.features.length === 0) {
+                document.getElementById('features-container').innerHTML = `<p style="color:var(--text-muted); font-size:12px; text-align:center;">Nessun privilegio registrato.</p>`;
+            } else {
+                document.getElementById('features-container').innerHTML = characterData.features.map(f => `<details><summary>${f.name} <span>+</span></summary><div class="details-content">${f.desc}</div></details>`).join('');
+            }
+            
+            // INCANTESIMI
+            let spellRender = characterData.spells.map((g, lIdx) => {
+                if (g.items.length === 0) return '';
+                let slotsHtml = (g.levelId > 0 && characterData.spellSlots[g.levelId]) ? `<div class="slot-container"><span style="font-size:12px; color:var(--text-muted); width:75px;">Slot Usati:</span>` + characterData.spellSlots[g.levelId].map((used, idx) => `<div class="slot-dot ${used ? 'used' : ''}" onclick="toggleSpellSlot(${g.levelId}, ${idx})"></div>`).join('') + `</div>` : '';
+                return `<div class="spell-level">${g.level}</div>${slotsHtml}` + g.items.map((s, sIdx) => {
+                    let star = `<span onclick="togglePrepared(${lIdx}, ${sIdx}, event)" style="font-size:16px; cursor:pointer; margin-right:8px; opacity: ${s.prepared ? '1' : '0.3'}; filter: ${s.prepared ? 'grayscale(0)' : 'grayscale(100%)'}; transition: 0.2s;" title="Clicca per Preparare">🌟</span>`;
+                    
+                    let atkBtn = s.atk ? `<button class="action-btn btn-hit" onclick="rollSpellAttack(${lIdx}, ${sIdx})">🎯 Attacco</button>` : '';
+                    let dmgBtn = s.dmg ? `<button class="action-btn btn-dmg" onclick="rollSpellDamage(${lIdx}, ${sIdx})">💥 Danno</button>` : '';
+                    let healBtn = s.heal ? `<button class="action-btn btn-heal" onclick="rollSpellHeal(${lIdx}, ${sIdx})">💊 Cura</button>` : '';
+                    let spellActions = (s.atk || s.dmg || s.heal) ? `<div class="attack-actions" style="margin-top:10px;">${atkBtn}${dmgBtn}${healBtn}</div>` : '';
+
+                    let tags = '';
+                    if (s.atk || s.dmg || s.type) tags += `<span>${s.type || s.dmg || s.atk}</span>`;
+
+                    return `<details><summary style="display:flex; align-items:center;"><div>${star}${s.name}</div> <span>▼</span></summary><div class="details-content"><div class="spell-tags">${tags}</div><p style="margin-top:5px; line-height: 1.4;">${s.desc}</p>${spellActions}</div></details>`;
+                }).join('');
+            }).join('');
+            
+            document.getElementById('spells-container').innerHTML = spellRender || `<p style="color:var(--text-muted); font-size:12px; text-align:center;">Nessun incantesimo registrato.</p>`;
+        }
+
+        document.addEventListener('DOMContentLoaded', loadCharacter);
+    </script>
+</body>
+</html>
