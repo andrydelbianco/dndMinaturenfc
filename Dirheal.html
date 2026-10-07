@@ -80,7 +80,7 @@
         .spell-tags span { background: #444; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-right: 5px; color: var(--secondary-color); display: inline-block; margin-bottom: 5px; }
         .spell-level { color: var(--primary-color); font-weight: bold; margin: 15px 0 5px 0; border-bottom: 1px solid #333; padding-bottom: 5px;}
         
-        .slot-container { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; }
+        .slot-container { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
         .slot-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--primary-color); background: transparent; cursor: pointer; transition: all 0.2s; }
         .slot-dot.used { background: var(--primary-color); box-shadow: 0 0 6px var(--primary-color); }
 
@@ -157,7 +157,7 @@
         <div class="stats-grid card">
             <div class="stat-box" style="cursor: default; display:flex; flex-direction:column; justify-content:center; align-items:center;">
                 <span style="margin-bottom:2px;">CA</span>
-                <strong class="char-ac-display" style="font-size: 24px; line-height: 1;">14</strong>
+                <strong class="char-ac-display" style="font-size: 24px; line-height: 1;">15</strong>
             </div>
             <div class="stat-box" style="cursor: pointer; border: 1px solid var(--secondary-color); display:flex; flex-direction:column; justify-content:center;" onclick="rollInitiative(characterData.initiative)">
                 <span>INIZIATIVA 🎲</span><strong id="char-init">+6</strong>
@@ -195,7 +195,7 @@
             <div class="card" style="margin:0; text-align: center; border: 1px solid var(--primary-color); padding: 10px;">
                 <span style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 5px;">CLASSE ARMATURA</span>
                 <div style="display:flex; justify-content:center; align-items:center; height:100%;">
-                    <strong class="char-ac-display" style="font-size: 28px; color: var(--primary-color); line-height:0.8;">14</strong>
+                    <strong class="char-ac-display" style="font-size: 28px; color: var(--primary-color); line-height:0.8;">15</strong>
                 </div>
             </div>
         </div>
@@ -224,11 +224,10 @@
 
     <!-- 3. INCANTESIMI -->
     <div id="sec-incantesimi" class="section">
-        <div class="stats-grid card" style="grid-template-columns: repeat(2, 1fr); gap: 10px;">
+        <div class="stats-grid card">
             <div class="stat-box"><span>MOD MAGIA</span><strong id="char-spell-mod">+3</strong></div>
             <div class="stat-box"><span>CD SALVEZZA</span><strong id="char-dc">14</strong></div>
             <div class="stat-box"><span>BONUS ATTACCO</span><strong id="char-spell-atk">+6</strong></div>
-            <div class="stat-box"><span>MARCHIO (GRATIS)</span><strong id="char-sp">3</strong></div>
         </div>
         <div class="card" id="spells-container">Nessun incantesimo registrato.</div>
     </div>
@@ -349,14 +348,13 @@
             species: "Umano",
             class: "Ranger (Cacciatore)",
             level: 5,
-            ac: 14, 
+            ac: 15, // 14 base + 1 armatura di cuoio equipaggiata
             hpMax: 39,
             hpCurrent: 39,
             initiative: "+6",
             spellMod: "+3",
             spellDC: 14,
             spellAtk: "+6",
-            sorceryPoints: 3, 
             inspiration: false, 
             
             stats: { FOR: "-1", DES: "+4", COS: "+1", INT: "+0", SAG: "+3", CAR: "+0" },
@@ -397,9 +395,16 @@
                 { name: "Talento: Iniziato alla Magia", desc: "Conosci 2 trucchetti (Guida, Salvare i Morenti) e puoi lanciare un incantesimo di 1° livello." }
             ],
             
-            spellSlots: { 1: [false, false, false, false], 2: [false, false], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [] },
+            // "special" è la chiave usata per tenere traccia dei pallini del Marchio del Cacciatore
+            spellSlots: { "special": [false, false, false], 1: [false, false, false, false], 2: [false, false], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [] },
 
             spells: [
+                {
+                    levelId: "special", level: "Privilegio: Marchio del Cacciatore",
+                    items: [
+                        { name: "Marchio del Cacciatore", prepared: true, dmg: "1d6", type: "Extra", desc: "Azione Bonus. Scegli una creatura (27m). Infliggi 1d6 danni extra ai tuoi attacchi contro di essa. Vantaggio a Percezione/Sopravvivenza per cercarla (Concentrazione, 1 ora)." }
+                    ]
+                },
                 {
                     levelId: 0, level: "Trucchetti",
                     items: [
@@ -410,7 +415,6 @@
                 {
                     levelId: 1, level: "Livello 1",
                     items: [
-                        { name: "Marchio del Cacciatore", prepared: true, dmg: "1d6", type: "Extra", desc: "Azione Bonus. Scegli una creatura (27m). Infliggi 1d6 danni extra ai tuoi attacchi contro di essa. Vantaggio a Percezione/Sopravvivenza per cercarla (Concentrazione, 1 ora)." },
                         { name: "Cura Ferite", prepared: true, heal: "1d8+3", desc: "Tocchi una creatura e le ripristini 1d8 + Mod Saggezza Punti Ferita." },
                         { name: "Passo Veloce", prepared: true, desc: "Tocchi una creatura. La sua velocità aumenta di 3 metri per 1 ora." },
                         { name: "Parlare con Animali", prepared: true, desc: "Ottieni la capacità di comprendere e comunicare verbalmente con le bestie (10 min)." },
@@ -428,7 +432,7 @@
             ],
             
             inventory: [
-                { type: "armor", name: "Armatura di Cuoio (Leggera)", desc: "CA base 11 + Mod Des", acBonus: 1, equipped: true, qty: 1 },
+                { type: "armor", name: "Armatura di Cuoio (Leggera)", desc: "CA base 14 (Senza Armatura) + 1 Mod Armatura", acBonus: 1, equipped: true, qty: 1 },
                 { type: "item", name: "Strumenti da Cartografo", desc: "Kit per disegnare mappe.", qty: 1 },
                 { type: "item", name: "Kit da Esploratore", desc: "Zaino, sacco a pelo, gavetta, acciarino, torce, razioni, otre, corda.", qty: 1 }
             ]
@@ -446,7 +450,15 @@
                 if (parsed.hpCurrent !== undefined) characterData.hpCurrent = parsed.hpCurrent;
                 if (Array.isArray(parsed.inventory)) characterData.inventory = parsed.inventory;
                 if (parsed.inspiration !== undefined) characterData.inspiration = parsed.inspiration;
-                if (parsed.spellSlots) characterData.spellSlots = parsed.spellSlots;
+                
+                if (parsed.spellSlots) {
+                    characterData.spellSlots = parsed.spellSlots;
+                    // Protezione: se i vecchi dati non avevano lo slot 'special' per il marchio, lo aggiungiamo
+                    if (!characterData.spellSlots["special"]) {
+                        characterData.spellSlots["special"] = [false, false, false];
+                    }
+                }
+                
                 if (parsed.hitDiceUsed !== undefined) characterData.hitDiceUsed = parsed.hitDiceUsed;
                 if (parsed.currency) characterData.currency = parsed.currency;
                 
@@ -484,7 +496,7 @@
         }
 
         function resetData() {
-            if(confirm("Sei sicuro di voler resettare tutti i dati salvati? Questo eliminerà l'equipaggiamento e i danni subiti.")) {
+            if(confirm("Sei sicuro di voler resettare tutti i dati salvati? Questo eliminerà le modifiche recenti alla salute e inventario.")) {
                 localStorage.removeItem(storageKey);
                 location.reload(); 
             }
@@ -500,7 +512,11 @@
         }
 
         function toggleInspiration() { characterData.inspiration = !characterData.inspiration; saveData(); loadCharacter(); }
-        function toggleSpellSlot(level, index) { characterData.spellSlots[level][index] = !characterData.spellSlots[level][index]; saveData(); loadCharacter(); }
+        
+        function toggleSpellSlot(level, index) { 
+            characterData.spellSlots[level][index] = !characterData.spellSlots[level][index]; 
+            saveData(); loadCharacter(); 
+        }
         
         function togglePrepared(lIdx, sIdx, event) {
             event.stopPropagation();
@@ -800,7 +816,6 @@
             document.getElementById('char-spell-mod').innerText = characterData.spellMod;
             document.getElementById('char-dc').innerText = characterData.spellDC;
             document.getElementById('char-spell-atk').innerText = characterData.spellAtk;
-            document.getElementById('char-sp').innerText = characterData.sorceryPoints;
 
             document.getElementById('coin-gold').value = characterData.currency.gold;
             document.getElementById('coin-silver').value = characterData.currency.silver;
@@ -915,8 +930,25 @@
             // INCANTESIMI
             let spellRender = characterData.spells.map((g, lIdx) => {
                 if (g.items.length === 0) return '';
-                let slotsHtml = (g.levelId > 0 && characterData.spellSlots[g.levelId]) ? `<div class="slot-container"><span style="font-size:12px; color:var(--text-muted); width:75px;">Slot Usati:</span>` + characterData.spellSlots[g.levelId].map((used, idx) => `<div class="slot-dot ${used ? 'used' : ''}" onclick="toggleSpellSlot(${g.levelId}, ${idx})"></div>`).join('') + `</div>` : '';
-                return `<div class="spell-level">${g.level}</div>${slotsHtml}` + g.items.map((s, sIdx) => {
+                
+                // Creazione della griglia dei pallini interattivi in base al livello o al privilegio
+                let slotsHtml = '';
+                if (characterData.spellSlots[g.levelId] && characterData.spellSlots[g.levelId].length > 0) {
+                    let dotColor = g.levelId === 'special' ? 'border-color: var(--secondary-color);' : '';
+                    let dotUsedClass = g.levelId === 'special' ? 'used' : 'used'; // Aggiungiamo un tocco visivo per gli slot speciali
+                    
+                    slotsHtml = `<div class="slot-container">
+                                    <span style="font-size:12px; color:var(--text-muted); width:75px;">Usi Effettuati:</span>` + 
+                                    characterData.spellSlots[g.levelId].map((used, idx) => {
+                                        let bgStyle = used && g.levelId === 'special' ? 'background: var(--secondary-color); box-shadow: 0 0 6px var(--secondary-color);' : '';
+                                        return `<div class="slot-dot ${used ? 'used' : ''}" style="${dotColor} ${bgStyle}" onclick="toggleSpellSlot('${g.levelId}', ${idx})"></div>`;
+                                    }).join('') + 
+                                `</div>`;
+                }
+
+                let groupTitleColor = g.levelId === 'special' ? 'color: var(--secondary-color);' : '';
+
+                return `<div class="spell-level" style="${groupTitleColor}">${g.level}</div>${slotsHtml}` + g.items.map((s, sIdx) => {
                     let star = `<span onclick="togglePrepared(${lIdx}, ${sIdx}, event)" style="font-size:16px; cursor:pointer; margin-right:8px; opacity: ${s.prepared ? '1' : '0.3'}; filter: ${s.prepared ? 'grayscale(0)' : 'grayscale(100%)'}; transition: 0.2s;" title="Clicca per Preparare">🌟</span>`;
                     
                     let atkBtn = s.atk ? `<button class="action-btn btn-hit" onclick="rollSpellAttack(${lIdx}, ${sIdx})">🎯 Attacco</button>` : '';
