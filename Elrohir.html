@@ -142,8 +142,8 @@
             <div class="hp-controls">
                 <button class="hp-btn minus" style="width:35px; height:35px; font-size:20px;" onclick="changeHP(-1)">-</button>
                 <div>
-                    <strong class="char-hp-current-display" style="font-size: 28px; color: var(--secondary-color);">55</strong> 
-                    <span style="font-size: 18px; color: var(--text-muted);">/ <span class="char-hp-max-display">55</span></span>
+                    <strong class="char-hp-current-display" style="font-size: 28px; color: var(--secondary-color);">50</strong> 
+                    <span style="font-size: 18px; color: var(--text-muted);">/ <span class="char-hp-max-display">50</span></span>
                 </div>
                 <button class="hp-btn plus" style="width:35px; height:35px; font-size:20px;" onclick="changeHP(1)">+</button>
             </div>
@@ -163,7 +163,7 @@
                 <span>INIZIATIVA 🎲</span><strong id="char-init">+2</strong>
             </div>
             <div class="stat-box" style="cursor: default; display:flex; flex-direction:column; justify-content:center;">
-                <span>VELOCITÀ</span><strong>13.5m</strong>
+                <span>VELOCITÀ</span><strong>15m</strong>
             </div>
         </div>
         
@@ -188,7 +188,7 @@
                 <span style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 5px;">PUNTI FERITA</span>
                 <div class="hp-controls" style="margin-bottom: 0;">
                     <button class="hp-btn minus" style="width:25px; height:25px; font-size:16px;" onclick="changeHP(-1)">-</button>
-                    <div><strong class="char-hp-current-display" style="font-size: 20px; color: var(--secondary-color);">55</strong> <span style="font-size: 14px; color: var(--text-muted);">/<span class="char-hp-max-display">55</span></span></div>
+                    <div><strong class="char-hp-current-display" style="font-size: 20px; color: var(--secondary-color);">50</strong> <span style="font-size: 14px; color: var(--text-muted);">/<span class="char-hp-max-display">50</span></span></div>
                     <button class="hp-btn plus" style="width:25px; height:25px; font-size:16px;" onclick="changeHP(1)">+</button>
                 </div>
             </div>
@@ -320,7 +320,7 @@
         <div class="pdf-header"><h1 id="pdf-name">Nome</h1><p><span id="pdf-class">Classe</span> | Livello <span id="pdf-level">1</span> | <span id="pdf-species">Specie</span></p></div>
         <div class="pdf-grid-3">
             <div class="pdf-box"><h3>Caratteristiche & TS</h3><div class="pdf-list" id="pdf-stats"></div></div>
-            <div class="pdf-box"><h3>Combattimento & Punti Ferita</h3><div class="pdf-list"><div><strong>Punti Ferita:</strong> <span id="pdf-hp"></span></div><div><strong>Classe Armatura:</strong> <span id="pdf-ac"></span></div><div><strong>Iniziativa:</strong> <span id="pdf-init"></span></div><div><strong>Velocità:</strong> 13.5m</div><div><strong>Bonus Competenza:</strong> +3</div></div><h3 style="margin-top:15px;">Denari</h3><div class="pdf-list" id="pdf-coins"></div></div>
+            <div class="pdf-box"><h3>Combattimento & Punti Ferita</h3><div class="pdf-list"><div><strong>Punti Ferita:</strong> <span id="pdf-hp"></span></div><div><strong>Classe Armatura:</strong> <span id="pdf-ac"></span></div><div><strong>Iniziativa:</strong> <span id="pdf-init"></span></div><div><strong>Velocità:</strong> 15m</div><div><strong>Bonus Competenza:</strong> +3</div></div><h3 style="margin-top:15px;">Denari</h3><div class="pdf-list" id="pdf-coins"></div></div>
             <div class="pdf-box"><h3>Abilità</h3><div class="pdf-list" id="pdf-skills"></div></div>
         </div>
         <div class="pdf-grid-3" style="grid-template-columns: 1fr 1fr;">
@@ -348,9 +348,9 @@
             species: "Elfo",
             class: "Barbaro (Berserker)",
             level: 5,
-            ac: 15, // 10 base + 3 Des (16) + 2 Cos (14) tramite Difesa Senza Armatura
-            hpMax: 55,
-            hpCurrent: 55,
+            ac: 15, 
+            hpMax: 50,
+            hpCurrent: 50,
             initiative: "+2",
             spellMod: "+2",
             spellDC: 12,
@@ -383,7 +383,9 @@
             currency: { gold: 0, silver: 0, copper: 0 },
 
             battleAttacks: [
-                { name: "Ascia Bipenne", atk: "+6", dmg: "1d12+3", type: "Tagliente (Versatile)" },
+                { name: "Handaxe (Ascia a mano)", atk: "+6", dmg: "1d6+3", type: "Tagliente (Leggera, Gittata)" },
+                { name: "Spada Lunga (1 Mano)", atk: "+6", dmg: "1d8+3", type: "Tagliente (Versatile)" },
+                { name: "Spada Lunga (2 Mani)", atk: "+6", dmg: "1d10+3", type: "Tagliente (Versatile)" },
                 { name: "Giavellotto", atk: "+6", dmg: "1d6+3", type: "Perforante (Gittata 9/36m)" }
             ],
             
@@ -392,7 +394,7 @@
                 { name: "Difesa Senza Armatura", desc: "Senza armatura, la tua CA è 10 + Modificatore di Destrezza (+3) + Modificatore di Costituzione (+2) = 15." },
                 { name: "Attacco Sconsiderato (Reckless Attack)", desc: "Puoi rinunciare al vantaggio sui tiri per colpire in mischia per ottenere vantaggio su tutti i tiri per colpire in mischia basati su Forza per quel turno." },
                 { name: "Pericolo Scampato (Danger Sense)", desc: "Vantaggio ai TS su Destrezza contro effetti che puoi vedere (es. trappole e incantesimi)." },
-                { name: "Movimento Veloce (Fast Movement)", desc: "La tua velocità aumenta di 3 metri quando non indossi un'armatura pesante (già calcolata a 13.5m)." },
+                { name: "Movimento Veloce (Fast Movement)", desc: "La tua velocità aumenta di 3 metri quando non indossi un'armatura pesante (già calcolata a 15m)." },
                 { name: "Attacco Extra", desc: "Puoi attaccare due volte invece di una quando usi l'azione di Attacco." },
                 { name: "Frenesia (Berserker)", desc: "Puoi entrare in Frenesia quando sei in Ira. Durante la frenesia puoi effettuare un attacco in mischia con un'azione bonus." }
             ],
@@ -422,7 +424,8 @@
             ],
             
             inventory: [
-                { type: "weapon", name: "Ascia Bipenne", atk: "+6", dmg: "1d12+3", desc: "Arma da mischia pesante e bifronte.", qty: 1 },
+                { type: "weapon", name: "Handaxe (Ascia a mano)", atk: "+6", dmg: "1d6+3", desc: "Ascia leggera da mischia o lancio.", qty: 2 },
+                { type: "weapon", name: "Spada Lunga", atk: "+6", dmg: "1d8+3", desc: "Spada versatile (1d10 a due mani).", qty: 1 },
                 { type: "weapon", name: "Giavellotto", atk: "+6", dmg: "1d6+3", desc: "Arma da lancio.", qty: 4 },
                 { type: "item", name: "Zaino da Esploratore", desc: "Include sacco a pelo, gavetta, acciarino, torce, razioni (10 giorni), otre.", qty: 1 },
                 { type: "item", name: "Corda di Canapa (15 metri)", desc: "Utile per scalare o legare.", qty: 1 },
@@ -548,7 +551,7 @@
             let conMod = parseInt(characterData.stats.COS.replace('+', '')); 
             let totalHeal = 0, rollDetails = [];
             for(let i=0; i<numDice; i++) {
-                let r = Math.floor(Math.random() * 12) + 1; // Dadi vita del Barbaro = d12
+                let r = Math.floor(Math.random() * 12) + 1; 
                 totalHeal += r + conMod;
                 rollDetails.push(r);
             }
