@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Scheda Personaggio NFC - Alatar</title>
-    <!-- Libreria per l'esportazione PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
@@ -18,25 +17,14 @@
             --border-radius: 12px;
         }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 0;
-            padding-bottom: 90px;
-        }
-
-        /* HEADER & ISPIRAZIONE */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 0; padding-bottom: 90px; }
         header { background-color: var(--surface-color); padding: 20px; text-align: center; border-bottom: 1px solid #333; }
         header h1 { margin: 0; font-size: 24px; color: var(--primary-color); display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
         .inspiration-container { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-muted); background: #2c2c2c; padding: 4px 8px; border-radius: 20px; cursor: pointer; border: 1px solid transparent; transition: all 0.3s; }
         .inspiration-container.active { border-color: var(--secondary-color); background: rgba(3, 218, 198, 0.1); color: var(--secondary-color); }
         .inspiration-btn { opacity: 0.3; filter: grayscale(100%); transition: all 0.3s; font-size: 16px; }
         .inspiration-btn.active { opacity: 1; filter: grayscale(0%); transform: scale(1.2); }
-        .level-up-btn { background-color: var(--secondary-color); color: #000; border: none; border-radius: 4px; padding: 4px 10px; font-size: 12px; font-weight: bold; cursor: pointer; margin-left: 10px; }
 
-        /* SEZIONI E CARDS */
         .section { display: none; padding: 20px; animation: fadeIn 0.3s; }
         .section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -53,9 +41,9 @@
         .skill-btn span.name { font-size: 12px; font-weight: bold; }
         .skill-btn span.mod { color: var(--primary-color); font-size: 14px; }
         
-        /* HP & RIPOSI */
-        .hp-controls { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 15px; }
-        .hp-btn { background: #444; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .hp-controls { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 15px; }
+        .hp-btn { background: #444; color: white; border: none; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
+        .hp-btn:active { transform: scale(0.9); }
         .hp-btn.minus { background-color: var(--danger-color); color: #000; }
         .hp-btn.plus { background-color: var(--secondary-color); color: #000; }
         
@@ -69,17 +57,15 @@
         .btn-short-rest { background-color: var(--secondary-color); }
         .btn-long-rest { background-color: var(--primary-color); }
 
-        /* DISPLAY SCHERMO (BATTAGLIA E SCHEDA) */
         .display-screen { text-align: center; padding: 15px; background: #000; border: 2px solid #333; border-radius: 8px; margin-bottom: 15px; }
         .display-screen span { display: block; font-size: 12px; color: var(--text-muted); }
         .display-screen h2 { margin: 5px 0 0 0; font-size: 38px; color: var(--text-color); }
         .display-screen .crit-text { font-size: 14px; color: #ffd700; display: block; margin-top: 5px; min-height: 20px; font-weight: bold; }
 
-        /* BATTAGLIA CARDS */
         .attack-card { background-color: #2c2c2c; border-radius: 8px; padding: 12px; margin-bottom: 10px; border: 1px solid #444; }
         .attack-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .attack-name { font-weight: bold; color: var(--text-color); font-size: 15px; display: flex; align-items: center; gap: 5px; }
-        .attack-stats { font-size: 11px; color: var(--text-muted); background: #1e1e1e; padding: 4px 8px; border-radius: 4px; }
+        .attack-stats { font-size: 11px; color: var(--text-muted); background: #1e1e1e; padding: 4px 8px; border-radius: 4px; text-align: right;}
         .attack-actions { display: flex; gap: 10px; }
         .action-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; display:flex; align-items:center; justify-content:center; gap:5px; transition: transform 0.1s; }
         .action-btn:active { transform: scale(0.95); }
@@ -87,19 +73,17 @@
         .btn-dmg { background-color: var(--danger-color); color: #000; }
         .btn-heal { background-color: var(--secondary-color); color: #000; }
 
-        /* MENU A TENDINA E INCANTESIMI */
         details { background-color: #2c2c2c; border-radius: 8px; margin-bottom: 10px; padding: 10px; }
-        summary { font-weight: bold; cursor: pointer; list-style: none; display: flex; justify-content: space-between; }
+        summary { font-weight: bold; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center;}
         summary::-webkit-details-marker { display: none; }
         .details-content { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #444; font-size: 14px; color: #ccc; }
         .spell-tags span { background: #444; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-right: 5px; color: var(--secondary-color); display: inline-block; margin-bottom: 5px; }
         .spell-level { color: var(--primary-color); font-weight: bold; margin: 15px 0 5px 0; border-bottom: 1px solid #333; padding-bottom: 5px;}
         
-        .slot-container { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; }
+        .slot-container { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
         .slot-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--primary-color); background: transparent; cursor: pointer; transition: all 0.2s; }
         .slot-dot.used { background: var(--primary-color); box-shadow: 0 0 6px var(--primary-color); }
 
-        /* INVENTARIO, MONETE E NOTE */
         .inv-form select, .inv-form input { width: 100%; background: #2c2c2c; border: 1px solid #444; color: white; padding: 10px; margin-bottom: 10px; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
         .inv-form button { width: 100%; background-color: var(--primary-color); color: #000; font-weight: bold; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-size: 16px; }
         .reset-btn { background-color: transparent; border: 1px solid var(--danger-color); padding: 10px; border-radius: 8px; width: 100%; cursor: pointer; margin-top: 15px; font-weight: bold; }
@@ -109,20 +93,17 @@
         .currency-box span { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; }
         .currency-box input { width: 80%; background: #1e1e1e; border: 1px solid #444; color: white; padding: 5px; text-align: center; border-radius: 4px; font-weight: bold; }
         
-        /* STILI DADI */
         .dice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
         .dice-btn { background-color: #2c2c2c; color: var(--text-color); border: 2px solid #333; border-radius: 8px; padding: 15px 0; font-size: 18px; font-weight: bold; cursor: pointer; }
         .dice-btn:active { background-color: var(--primary-color); color: #fff; transform: scale(0.95); }
         #dice-log { list-style: none; padding: 0; margin: 0; font-size: 14px; color: var(--text-muted); }
         #dice-log li { padding: 8px 0; border-bottom: 1px dashed #333; }
 
-        /* BOTTOM NAVIGATION */
         nav { position: fixed; bottom: 0; width: 100%; background-color: var(--surface-color); display: flex; padding: 8px 0; border-top: 1px solid #333; z-index: 1000; }
         nav button { background: none; border: none; color: var(--text-muted); font-size: 10px; font-weight: 600; display: flex; flex-direction: column; align-items: center; padding: 5px 2px; cursor: pointer; flex: 1; }
         nav button.active { color: var(--primary-color); background-color: rgba(187, 134, 252, 0.1); border-radius: 8px; }
         nav button i { font-size: 20px; margin-bottom: 4px; font-style: normal; }
 
-        /* EXPORT PDF HIDDEN TEMPLATE */
         #pdf-export-template { display: none; background: white; color: black; padding: 40px; font-family: serif; width: 800px; }
         .pdf-header { text-align: center; border-bottom: 2px solid black; margin-bottom: 20px; padding-bottom: 10px; }
         .pdf-header h1 { font-size: 32px; margin: 0; text-transform: uppercase; }
@@ -145,13 +126,11 @@
         </h1>
         <p>
             <span id="char-subtitle">Classe</span> - Lvl <span id="char-level">1</span>
-            <button class="level-up-btn" onclick="levelUp()">+ Lv</button>
         </p>
     </header>
 
     <!-- 1. SCHEDA GENERALE & ABILITÀ -->
     <div id="sec-scheda" class="section active">
-        
         <div class="display-screen">
             <span id="scheda-result-label">Seleziona Caratteristica o Abilità</span>
             <h2 id="scheda-result-value">--</h2>
@@ -161,14 +140,13 @@
         <div class="card" style="text-align: center;">
             <span style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 10px;">PUNTI FERITA ATTUALI / MAX</span>
             <div class="hp-controls">
-                <button class="hp-btn minus" onclick="changeHP(-1)">-</button>
+                <button class="hp-btn minus" style="width:35px; height:35px; font-size:20px;" onclick="changeHP(-1)">-</button>
                 <div>
                     <strong class="char-hp-current-display" style="font-size: 28px; color: var(--secondary-color);">32</strong> 
                     <span style="font-size: 18px; color: var(--text-muted);">/ <span class="char-hp-max-display">32</span></span>
                 </div>
-                <button class="hp-btn plus" onclick="changeHP(1)">+</button>
+                <button class="hp-btn plus" style="width:35px; height:35px; font-size:20px;" onclick="changeHP(1)">+</button>
             </div>
-            
             <div class="hd-container" id="hd-container"></div>
             <div class="rest-buttons">
                 <button class="rest-btn btn-short-rest" onclick="shortRest()">Riposo Breve</button>
@@ -177,23 +155,26 @@
         </div>
 
         <div class="stats-grid card">
-            <div class="stat-box" style="cursor: default;"><span>CA</span><strong id="char-ac">10</strong></div>
-            <div class="stat-box" style="cursor: pointer; border: 1px solid var(--secondary-color);" onclick="rollStat('Iniziativa', characterData.initiative)">
-                <span>INIZIATIVA 🎲</span><strong id="char-init">+0</strong>
+            <div class="stat-box" style="cursor: default; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                <span style="margin-bottom:2px;">CA</span>
+                <strong class="char-ac-display" style="font-size: 24px; line-height: 1;">12</strong>
             </div>
-            <div class="stat-box" style="cursor: default;"><span>VELOCITÀ</span><strong>9m</strong></div>
+            <div class="stat-box" style="cursor: pointer; border: 1px solid var(--secondary-color); display:flex; flex-direction:column; justify-content:center;" onclick="rollInitiative(characterData.initiative)">
+                <span>INIZIATIVA 🎲</span><strong id="char-init">+5</strong>
+            </div>
+            <div class="stat-box" style="cursor: default; display:flex; flex-direction:column; justify-content:center;">
+                <span>VELOCITÀ</span><strong>9m</strong>
+            </div>
         </div>
         
         <div class="card">
             <h3 style="margin-top:0;">Caratteristiche (Clicca per tirare)</h3>
             <div class="stats-grid" id="stats-container"></div>
         </div>
-        
         <div class="card">
             <h3 style="margin-top:0;">Tiri Salvezza (Clicca per tirare)</h3>
             <div class="stats-grid" id="saves-container"></div>
         </div>
-
         <div class="card">
             <h3 style="margin-top:0;">Abilità</h3>
             <div class="skills-grid" id="skills-container"></div>
@@ -202,15 +183,20 @@
 
     <!-- 2. BATTAGLIA -->
     <div id="sec-battaglia" class="section">
-        <div class="card" style="text-align: center; border: 1px solid var(--danger-color); margin-bottom: 10px;">
-            <span style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 10px;">PUNTI FERITA (COLLEGATI)</span>
-            <div class="hp-controls" style="margin-bottom: 5px;">
-                <button class="hp-btn minus" onclick="changeHP(-1)">-</button>
-                <div>
-                    <strong class="char-hp-current-display" style="font-size: 28px; color: var(--secondary-color);">32</strong> 
-                    <span style="font-size: 18px; color: var(--text-muted);">/ <span class="char-hp-max-display">32</span></span>
+        <div class="stats-grid" style="grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 10px;">
+            <div class="card" style="margin:0; text-align: center; border: 1px solid var(--danger-color); padding: 10px;">
+                <span style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 5px;">PUNTI FERITA</span>
+                <div class="hp-controls" style="margin-bottom: 0;">
+                    <button class="hp-btn minus" style="width:25px; height:25px; font-size:16px;" onclick="changeHP(-1)">-</button>
+                    <div><strong class="char-hp-current-display" style="font-size: 20px; color: var(--secondary-color);">32</strong> <span style="font-size: 14px; color: var(--text-muted);">/<span class="char-hp-max-display">32</span></span></div>
+                    <button class="hp-btn plus" style="width:25px; height:25px; font-size:16px;" onclick="changeHP(1)">+</button>
                 </div>
-                <button class="hp-btn plus" onclick="changeHP(1)">+</button>
+            </div>
+            <div class="card" style="margin:0; text-align: center; border: 1px solid var(--primary-color); padding: 10px;">
+                <span style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 5px;">CLASSE ARMATURA</span>
+                <div style="display:flex; justify-content:center; align-items:center; height:100%;">
+                    <strong class="char-ac-display" style="font-size: 28px; color: var(--primary-color); line-height:0.8;">12</strong>
+                </div>
             </div>
         </div>
 
@@ -220,9 +206,14 @@
             <div class="crit-text" id="battle-result-crit"></div>
         </div>
 
-        <div class="card">
-            <h3 style="margin-top:0;">Armi e Incantesimi</h3>
-            <div id="battle-attacks-container"></div>
+        <div class="card" id="battle-weapons-wrapper" style="display:none;">
+            <h3 style="margin-top:0;">Attacchi Fisici</h3>
+            <div id="battle-weapons-container">Nessun attacco fisico registrato.</div>
+        </div>
+
+        <div class="card" id="battle-spells-card" style="display:none;">
+            <h3 style="margin-top:0;">Incantesimi Preparati</h3>
+            <div id="battle-spells-container"></div>
         </div>
 
         <div class="card" id="battle-potions-container" style="display:none;">
@@ -234,16 +225,16 @@
     <!-- 3. INCANTESIMI -->
     <div id="sec-incantesimi" class="section">
         <div class="stats-grid card">
-            <div class="stat-box"><span>CD SALVEZZA</span><strong id="char-dc">10</strong></div>
-            <div class="stat-box"><span>BONUS ATTACCO</span><strong id="char-spell-atk">+0</strong></div>
-            <div class="stat-box"><span>PUNTI STREGONE</span><strong id="char-sp">5</strong></div>
+            <div class="stat-box"><span>MOD MAGIA</span><strong id="char-spell-mod">+4</strong></div>
+            <div class="stat-box"><span>CD SALVEZZA</span><strong id="char-dc">15</strong></div>
+            <div class="stat-box"><span>BONUS ATTACCO</span><strong id="char-spell-atk">+7</strong></div>
         </div>
-        <div class="card" id="spells-container"></div>
+        <div class="card" id="spells-container">Nessun incantesimo registrato.</div>
     </div>
 
     <!-- 4. TRATTI -->
     <div id="sec-tratti" class="section">
-        <div class="card" id="features-container"></div>
+        <div class="card" id="features-container">Nessun privilegio registrato.</div>
     </div>
 
     <!-- 5. INVENTARIO -->
@@ -253,6 +244,7 @@
             <select id="inv-type" onchange="toggleInvForm()">
                 <option value="item">🎒 Oggetto Base</option>
                 <option value="weapon">⚔️ Arma</option>
+                <option value="armor">🛡️ Armatura/Scudo</option>
                 <option value="potion">🧪 Pozione</option>
             </select>
             <input type="text" id="inv-name" placeholder="Nome Oggetto*" required>
@@ -266,6 +258,10 @@
             <div id="inv-weapon-fields" style="display:none;">
                 <input type="text" id="inv-atk" placeholder="Bonus Attacco (es. +7)">
                 <input type="text" id="inv-dmg" placeholder="Danno (es. 1d4+4)">
+            </div>
+
+            <div id="inv-armor-fields" style="display:none;">
+                <input type="number" id="inv-ac-bonus" placeholder="Bonus CA (es. +2)">
             </div>
             
             <div id="inv-potion-fields" style="display:none;">
@@ -284,7 +280,7 @@
             </div>
         </div>
 
-        <div id="inventory-container"></div>
+        <div id="inventory-container">Zaino vuoto.</div>
     </div>
 
     <!-- 6. DADI -->
@@ -309,69 +305,39 @@
         </div>
     </div>
 
-    <!-- 7. NOTE -->
+    <!-- 7. NOTE E WILD MAGIC -->
     <div id="sec-note" class="section">
+        <div class="card" style="border: 2px solid var(--primary-color);">
+            <h3 style="margin-top: 0; color: var(--primary-color);">✨ Wild Magic Surge</h3>
+            <button onclick="rollWildMagic()" style="width: 100%; padding: 15px; font-size: 18px; font-weight: bold; background: var(--primary-color); color: #000; border: none; border-radius: 8px; cursor: pointer; transition: 0.2s;">Gira la Ruota del Caos (d100)</button>
+            <div id="wild-magic-result" style="margin-top: 15px; padding: 15px; background: #000; border-radius: 8px; text-align: center; display: none;">
+                <h2 id="wm-roll" style="margin:0; font-size: 38px; color: var(--secondary-color);">--</h2>
+                <p id="wm-effect" style="font-size: 15px; margin-top: 10px; line-height: 1.4; color: white;"></p>
+            </div>
+        </div>
+
         <div class="card">
             <h3 style="margin-top: 0;">Appunti di Sessione</h3>
             <textarea id="session-notes" oninput="saveData()" style="width: 100%; height: 350px; background: #2c2c2c; color: white; border: 1px solid #444; padding: 12px; border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 14px; resize: vertical;" placeholder="Scrivi qui cosa succede al tavolo..."></textarea>
             
-            <button class="reset-btn" style="color:var(--secondary-color); border-color:var(--secondary-color);" onclick="exportPDF()">🖨️ Esporta "Zzzz Scheda Vuota.pdf" Compilata</button>
+            <button class="reset-btn" style="color:var(--secondary-color); border-color:var(--secondary-color);" onclick="exportPDF()">🖨️ Esporta "Personaggio_Scheda.pdf"</button>
             <button class="reset-btn" style="color:var(--danger-color);" onclick="resetData()">🗑️ Resetta Dati Salvati</button>
         </div>
     </div>
 
-    <!-- STRUTTURA NASCOSTA PER ESPORTAZIONE PDF -->
     <div id="pdf-export-template">
-        <div class="pdf-header">
-            <h1 id="pdf-name">Nome</h1>
-            <p><span id="pdf-class">Classe</span> | Livello <span id="pdf-level">1</span> | <span id="pdf-species">Specie</span></p>
-        </div>
-        
+        <div class="pdf-header"><h1 id="pdf-name">Nome</h1><p><span id="pdf-class">Classe</span> | Livello <span id="pdf-level">1</span> | <span id="pdf-species">Specie</span></p></div>
         <div class="pdf-grid-3">
-            <div class="pdf-box">
-                <h3>Caratteristiche & TS</h3>
-                <div class="pdf-list" id="pdf-stats"></div>
-            </div>
-            
-            <div class="pdf-box">
-                <h3>Combattimento & Punti Ferita</h3>
-                <div class="pdf-list">
-                    <div><strong>Punti Ferita:</strong> <span id="pdf-hp"></span></div>
-                    <div><strong>Classe Armatura:</strong> <span id="pdf-ac"></span></div>
-                    <div><strong>Iniziativa:</strong> <span id="pdf-init"></span></div>
-                    <div><strong>Velocità:</strong> 9m</div>
-                    <div><strong>Bonus Competenza:</strong> +3</div>
-                </div>
-                <h3 style="margin-top:15px;">Denari</h3>
-                <div class="pdf-list" id="pdf-coins"></div>
-            </div>
-
-            <div class="pdf-box">
-                <h3>Abilità</h3>
-                <div class="pdf-list" id="pdf-skills"></div>
-            </div>
+            <div class="pdf-box"><h3>Caratteristiche & TS</h3><div class="pdf-list" id="pdf-stats"></div></div>
+            <div class="pdf-box"><h3>Combattimento & Punti Ferita</h3><div class="pdf-list"><div><strong>Punti Ferita:</strong> <span id="pdf-hp"></span></div><div><strong>Classe Armatura:</strong> <span id="pdf-ac"></span></div><div><strong>Iniziativa:</strong> <span id="pdf-init"></span></div><div><strong>Velocità:</strong> 9m</div><div><strong>Bonus Competenza:</strong> +3</div></div><h3 style="margin-top:15px;">Denari</h3><div class="pdf-list" id="pdf-coins"></div></div>
+            <div class="pdf-box"><h3>Abilità</h3><div class="pdf-list" id="pdf-skills"></div></div>
         </div>
-
         <div class="pdf-grid-3" style="grid-template-columns: 1fr 1fr;">
-            <div class="pdf-box">
-                <h3>Incantesimi & Trucchetti</h3>
-                <div class="pdf-list">
-                    <div><strong>CD Salvezza:</strong> <span id="pdf-dc"></span></div>
-                    <div><strong>Bonus Attacco Inc.:</strong> <span id="pdf-spellatk"></span></div>
-                </div>
-                <div class="pdf-list" id="pdf-spells" style="margin-top:10px;"></div>
-            </div>
-
-            <div class="pdf-box">
-                <h3>Armi & Privilegi</h3>
-                <div class="pdf-list" id="pdf-attacks"></div>
-                <h3 style="margin-top:15px;">Privilegi Classe</h3>
-                <div class="pdf-list" id="pdf-features"></div>
-            </div>
+            <div class="pdf-box"><h3>Incantesimi & Trucchetti</h3><div class="pdf-list"><div><strong>CD Salvezza:</strong> <span id="pdf-dc"></span></div><div><strong>Bonus Attacco Inc.:</strong> <span id="pdf-spellatk"></span></div></div><div class="pdf-list" id="pdf-spells" style="margin-top:10px;"></div></div>
+            <div class="pdf-box"><h3>Armi & Privilegi</h3><div class="pdf-list" id="pdf-attacks"></div><h3 style="margin-top:15px;">Privilegi Classe</h3><div class="pdf-list" id="pdf-features"></div></div>
         </div>
     </div>
 
-    <!-- MENU DI NAVIGAZIONE -->
     <nav>
         <button onclick="switchTab('sec-scheda')" id="btn-sec-scheda" class="active"><i>👤</i>Scheda</button>
         <button onclick="switchTab('sec-battaglia')" id="btn-sec-battaglia"><i>⚔️</i>Combatti</button>
@@ -384,7 +350,7 @@
 
     <script>
         // ==========================================
-        // DATABASE PERSONAGGIO BASE
+        // DATABASE PERSONAGGIO BASE: ALATAR ALATIR
         // ==========================================
         let characterData = {
             name: "Alatar Alatir",
@@ -395,120 +361,199 @@
             hpMax: 32,
             hpCurrent: 32,
             initiative: "+5",
+            spellMod: "+4",
             spellDC: 15,
             spellAtk: "+7",
-            sorceryPoints: 5,
             inspiration: false, 
             
             stats: { FOR: "-1", DES: "+2", COS: "+2", INT: "+0", SAG: "+1", CAR: "+4" },
-            savingThrows: { 
-                FOR: "-1", DES: "+2", COS: "+2", INT: "+0", SAG: "+1", CAR: "+7" 
-            },
-            
+            savingThrows: { FOR: "-1", DES: "+2", COS: "+2", INT: "+0", SAG: "+1", CAR: "+7" },
             skills: {
-                Acrobazia: { attr: "DES", mod: "+2" },
-                "Addestrare Animali": { attr: "SAG", mod: "+1" },
-                Arcano: { attr: "INT", mod: "+3" },
-                Atletica: { attr: "FOR", mod: "-1" },
+                Acrobazia: { attr: "DES", mod: "+2" }, 
+                "Addestrare Animali": { attr: "SAG", mod: "+1" }, 
+                Arcano: { attr: "INT", mod: "+0" }, 
+                Atletica: { attr: "FOR", mod: "-1" }, 
                 Furtività: { attr: "DES", mod: "+2" },
-                Inganno: { attr: "CAR", mod: "+7" },
-                Indagare: { attr: "INT", mod: "+0" },
-                Intimidire: { attr: "CAR", mod: "+7" },
-                Intrattenere: { attr: "CAR", mod: "+4" },
-                Intuizione: { attr: "SAG", mod: "+1" },
-                Medicina: { attr: "SAG", mod: "+1" },
-                Natura: { attr: "INT", mod: "+0" },
-                Percezione: { attr: "SAG", mod: "+1" },
-                Persuasione: { attr: "CAR", mod: "+7" },
-                "Rapidità di Mano": { attr: "DES", mod: "+2" },
-                Religione: { attr: "INT", mod: "+0" },
-                Sopravvivenza: { attr: "SAG", mod: "+1" },
+                "Inganno ✦": { attr: "CAR", mod: "+7" }, 
+                "Indagare ✦": { attr: "INT", mod: "+3" }, 
+                Intimidire: { attr: "CAR", mod: "+4" }, 
+                Intrattenere: { attr: "CAR", mod: "+4" }, 
+                "Intuizione ✦": { attr: "SAG", mod: "+4" },
+                Medicina: { attr: "SAG", mod: "+1" }, 
+                "Natura ✦": { attr: "INT", mod: "+3" }, 
+                "Percezione ✦": { attr: "SAG", mod: "+4" }, 
+                "Persuasione ✦": { attr: "CAR", mod: "+7" }, 
+                "Rapidità di Mano ✦": { attr: "DES", mod: "+5" },
+                Religione: { attr: "INT", mod: "+0" }, 
+                Sopravvivenza: { attr: "SAG", mod: "+1" }, 
                 Storia: { attr: "INT", mod: "+0" }
             },
-
             hitDiceUsed: 0,
             currency: { gold: 0, silver: 0, copper: 0 },
 
-            battleAttacks: [
-                { name: "Sorcerous Burst", atk: "+7", dmg: "1d8", type: "Vario" },
-                { name: "Witch Bolt", atk: "+7", dmg: "1d12", type: "Fulmine" },
-                { name: "Ray of Sickness", atk: "+7", dmg: "2d8", type: "Veleno" }
-            ],
-
+            battleAttacks: [],
+            
             features: [
-                { name: "Quicken Spell (2 SP)", desc: "Lancio come azione bonus." },
-                { name: "Heightened Spell (2 SP)", desc: "Svantaggio al primo TS del bersaglio." },
                 { name: "Innate Sorcery", desc: "Vantaggio agli attacchi con incantesimo, +1 CD." },
-                { name: "Wild Magic Surge", desc: "Se esce 1 col d20 dopo incantesimo, tira magia selvaggia." },
-                { name: "Alert", desc: "+3 Iniziativa. Scambia iniziativa." }
+                { name: "Wild Magic Surge", desc: "Se esce 1 col d20 dopo incantesimo, tira magia selvaggia sulla ruota nel tab Note." },
+                { name: "Alert", desc: "+3 Iniziativa. Puoi scambiare la tua iniziativa con un alleato consenziente." }
             ],
-
-            spellSlots: { 1: [false, false, false, false], 2: [false, false, false], 3: [false, false] },
+            
+            spellSlots: { 
+                1: [false, false, false, false], 
+                2: [false, false, false], 
+                3: [false, false],
+                'sp': [false, false, false, false, false] 
+            },
 
             spells: [
                 {
-                    levelId: 0, level: "Trucchetti (Livello 0)",
+                    levelId: 0, level: "Trucchetti",
                     items: [
-                        { name: "Mind Sliver", dmg: "1d6 Psichico", range: "18m", comp: "V", desc: "Sottrae 1d4 dal prossimo TS." },
-                        { name: "Sorcerous Burst", dmg: "1d8 Vario", range: "36m", comp: "V, S", desc: "Dado esplosivo se esce 8." },
-                        { name: "Mage Hand", dmg: "-", range: "9m", comp: "V, S", desc: "Crea una mano spettrale." },
-                        { name: "Minor Illusion", dmg: "-", range: "9m", comp: "S, M", desc: "Crea illusione (suono/immagine)." },
-                        { name: "Shocking Grasp", dmg: "2d8 Fulmine", range: "Contatto", comp: "V, S", desc: "Vantaggio contro metallo." }
+                        { name: "Mind Sliver", dmg: "1d6", type: "Psichico", range: "18m", desc: "Sottrae 1d4 dal prossimo TS del bersaglio.", prepared: true },
+                        { name: "Sorcerous Burst", dmg: "1d8", type: "Vario", atk: "+7", range: "36m", desc: "Dado esplosivo: se esce 8, tiri un altro d8 di danno.", prepared: true },
+                        { name: "Mage Hand", dmg: "-", range: "9m", desc: "Crea una mano spettrale che puoi controllare.", prepared: true },
+                        { name: "Minor Illusion", dmg: "-", range: "9m", desc: "Crea illusione di un suono o un'immagine minore.", prepared: true },
+                        { name: "Shocking Grasp", dmg: "2d8", type: "Fulmine", atk: "+7", range: "Contatto", desc: "Vantaggio al TxC se il bersaglio indossa armatura di metallo.", prepared: true }
                     ]
                 },
                 {
                     levelId: 1, level: "Livello 1",
                     items: [
-                        { name: "Chromatic Orb", dmg: "3d8 Vario", range: "27m", comp: "V, S, M", desc: "Attacco a distanza. Scegli tipo danno." },
-                        { name: "Ray of Sickness", dmg: "2d8 Veleno", range: "18m", comp: "V, S", desc: "Attacco a distanza. TS o avvelenato." },
-                        { name: "Witch Bolt", dmg: "1d12 Fulmine", range: "9m", comp: "V, S, M", desc: "Attacco. Danno continuo ogni turno. (Conc)" },
-                        { name: "Shield", dmg: "-", range: "Personale", comp: "V, S", desc: "Reazione: +5 CA fino al prossimo turno." }
+                        { name: "Chromatic Orb", dmg: "3d8", atk: "+7", type: "Vario", range: "27m", desc: "Attacco a distanza. Scegli tipo danno (Acido, Freddo, Fuoco, Fulmine, Veleno, Tuono).", prepared: true },
+                        { name: "Ray of Sickness", dmg: "2d8", atk: "+7", type: "Veleno", range: "18m", desc: "Attacco a distanza. TS o il bersaglio è avvelenato.", prepared: true },
+                        { name: "Witch Bolt", dmg: "1d12", atk: "+7", type: "Fulmine", range: "9m", desc: "Attacco. Danno continuo ogni turno come azione. (Conc)", prepared: true },
+                        { name: "Shield", dmg: "-", range: "Personale", desc: "Reazione: +5 CA fino al tuo prossimo turno, blocca Dardo Incantato.", prepared: true }
                     ]
                 },
                 {
                     levelId: 2, level: "Livello 2",
                     items: [
-                        { name: "Hold Person", dmg: "-", range: "18m", comp: "V, S, M", desc: "TS Saggezza o paralizzato. (Conc)" },
-                        { name: "Dragon's Breath", dmg: "3d6 Vario", range: "Contatto", comp: "V, S, M", desc: "Sputa energia. (Conc)" },
-                        { name: "Web", dmg: "-", range: "18m", comp: "V, S, M", desc: "Ragnatele, TS Destrezza. (Conc)" }
+                        { name: "Hold Person", dmg: "-", range: "18m", desc: "TS Saggezza o bersaglio paralizzato. (Conc)", prepared: true },
+                        { name: "Dragon's Breath", dmg: "3d6", type: "Vario", range: "Contatto", desc: "Sputa energia ad area. TS Destrezza dimezza. (Conc)", prepared: true },
+                        { name: "Web", dmg: "-", range: "18m", desc: "Ragnatele, TS Destrezza per non essere intralciati. (Conc)", prepared: true }
                     ]
                 },
                 {
                     levelId: 3, level: "Livello 3",
                     items: [
-                        { name: "Hypnotic Pattern", dmg: "-", range: "36m", comp: "S, M", desc: "TS Saggezza o affascinati/inabilitati. (Conc)" },
-                        { name: "Slow", dmg: "-", range: "36m", comp: "V, S, M", desc: "Fino a 6 creature penalizzate. (Conc)" }
+                        { name: "Hypnotic Pattern", dmg: "-", range: "36m", desc: "Cubo 9m. TS Saggezza o affascinati/inabilitati. (Conc)", prepared: true },
+                        { name: "Slow", dmg: "-", range: "36m", desc: "Fino a 6 creature rallentate e penalizzate (-2 CA, mezza vel). (Conc)", prepared: true }
+                    ]
+                },
+                {
+                    levelId: 'sp', level: "Punti Stregoneria / Metamagia",
+                    items: [
+                        { name: "Quicken Spell (Cost: 2 SP)", desc: "Lancia un incantesimo (Azione) usando un'Azione Bonus.", prepared: false },
+                        { name: "Heightened Spell (Cost: 2 SP)", desc: "Imponi Svantaggio al primo TS del bersaglio contro il tuo incantesimo.", prepared: false }
                     ]
                 }
             ],
-            inventory: [{ type: "item", name: "Fokus Arcano", desc: "Cristallo usato per lanciare incantesimi.", qty: 1 }]
+            
+            inventory: [
+                { type: "item", name: "Fokus Arcano", desc: "Cristallo usato per lanciare incantesimi senza componenti materiali generiche.", qty: 1 }
+            ]
         };
 
-        // ==========================================
-        // SISTEMA DI SALVATAGGIO (LOCAL STORAGE)
-        // ==========================================
         const storageKey = 'dnd_save_' + characterData.name.replace(/\s+/g, '_');
 
+        const wildMagicTable = [
+            "Tira su questa tabella all'inizio di ogni tuo turno per 1 minuto, ignorando questo risultato.",
+            "Per 1 minuto, i tuoi occhi risplendono di un'antica luce elfica, permettendoti di vedere perfettamente nel buio.",
+            "Un modrone appare nello spazio non occupato a te più vicino per 1 minuto. Agisce sotto il controllo del DM.",
+            "Casti <i>Palla di Fuoco</i> (Fireball) di 3° livello centrata su di te.",
+            "Casti <i>Dardo Incantato</i> (Magic Missile) di 5° livello.",
+            "Tira 1d10. La tua altezza cambia di un numero di cm pari al tiro x 3. Se pari cresci, se dispari rimpicciolisci.",
+            "Casti <i>Confusione</i> (Confusion) centrata su di te.",
+            "Per 1 minuto recuperi 5 PF all'inizio di ogni tuo turno.",
+            "Ti cresce una barba di piume. Svanisce magicamente se starnutisci.",
+            "Casti <i>Unto</i> (Grease) centrato su di te.",
+            "Le creature in un raggio di 9m da te subiscono 1d10 danni necrotici. Tu recuperi PF pari ai danni inflitti.",
+            "La tua pelle diventa di una brillante sfumatura di blu. Una <i>Rimuovi Maledizione</i> fa terminare l'effetto.",
+            "Un occhio ti cresce sulla fronte per 1 minuto. Durante questo tempo hai vantaggio alle prove di Percezione.",
+            "Per 1 minuto, tutti i tuoi incantesimi con tempo di lancio 1 azione, possono essere lanciati come 1 azione bonus.",
+            "Ti teletrasporti fino a 18m in uno spazio libero che puoi vedere.",
+            "Sei trasportato nel Mondo Non Visto (Wraith-world) fino alla fine del tuo prossimo turno, poi riappari dove eri o nello spazio libero più vicino.",
+            "Massimizzi i danni del prossimo incantesimo che infligge danni che lanci entro il prossimo minuto.",
+            "La tua età cambia di 1d10 anni. Pari invecchi, dispari ringiovanisci.",
+            "1d6 flumph controllati dal DM appaiono entro 18m da te per 1 minuto.",
+            "Recuperi 2d10 PF.",
+            "Diventi una pianta in vaso fino all'inizio del tuo prossimo turno. Sei incapacitato e hai vulnerabilità a tutti i danni.",
+            "Per 1 minuto puoi teletrasportarti fino a 6m come azione bonus in ciascuno dei tuoi turni.",
+            "Casti <i>Levitazione</i> (Levitate) su te stesso.",
+            "Un unicorno appare in uno spazio libero entro 1,5m da te per 1 minuto. Agisce sotto il controllo del DM.",
+            "Non puoi parlare per 1 minuto. Bolle rosa escono dalla tua bocca se provi a farlo.",
+            "Uno scudo spettrale aleggia vicino a te per 1 minuto, garantendoti +2 alla CA e immunità a <i>Dardo Incantato</i>.",
+            "Sei immune all'essere intossicato dall'alcol per i prossimi 5d6 giorni.",
+            "I tuoi capelli cadono. Ricrescono entro 24 ore.",
+            "Per 1 minuto, qualsiasi oggetto infiammabile che tocchi non indossato/trasportato prende fuoco.",
+            "Recuperi il tuo slot incantesimo di livello più basso speso.",
+            "Per 1 minuto devi gridare affinché le persone ti sentano quando parli.",
+            "Casti <i>Nube di Nebbia</i> (Fog Cloud) centrata su di te.",
+            "Fino a 3 creature a tua scelta entro 9m da te subiscono 4d10 danni da fulmine.",
+            "Sei spaventato dalla creatura più vicina a te finché non finisce il tuo prossimo turno.",
+            "Tutte le creature entro 9m da te sono avvolte da un'ombra protettiva, ottenendo Vantaggio alle prove di Furtività per 1 minuto.",
+            "Ottieni resistenza a tutti i danni per 1 minuto.",
+            "Una creatura casuale entro 18m da te diventa avvelenata per 1d4 ore.",
+            "Inizi a brillare intensamente per 1 minuto. Chi termina il turno a 1,5m da te è accecato fino al suo prossimo turno.",
+            "Casti <i>Metamorfosi</i> (Polymorph) su di te. Fallisci automaticamente il TS e diventi una pecora.",
+            "Illusioni di farfalle e petali svolazzano intorno a te per 1 minuto in un raggio di 3m.",
+            "Puoi compiere un'azione aggiuntiva immediatamente.",
+            "Tutte le creature entro 9m da te subiscono 1d10 danni necrotici.",
+            "Casti <i>Ritirata Rapida</i> (Expeditious Retreat).",
+            "Casti <i>Passare Senza Tracce</i> (Pass without Trace).",
+            "Illusioni di foglie autunnali di Lórien cadono intorno a te per 1 minuto, camuffando i tuoi passi (Vantaggio a Furtività o finché non attacchi).",
+            "Se muori entro il prossimo minuto, torni in vita immediatamente (come <i>Reincarnazione</i>).",
+            "La tua taglia aumenta di una categoria per 1 minuto.",
+            "Tu e tutte le creature a 9m da te diventate vulnerabili al danno perforante per 1 minuto.",
+            "Sei circondato da una debole musica eterea per 1 minuto.",
+            "Recuperi tutti i punti stregoneria spesi."
+        ];
+
         function loadSavedData() {
-            const saved = localStorage.getItem(storageKey);
-            if (saved) {
+            try {
+                const saved = localStorage.getItem(storageKey);
+                if (!saved) return;
+                
                 const parsed = JSON.parse(saved);
+                if (parsed.ac !== undefined) characterData.ac = parsed.ac;
                 if (parsed.hpCurrent !== undefined) characterData.hpCurrent = parsed.hpCurrent;
-                if (parsed.inventory) characterData.inventory = parsed.inventory;
+                if (Array.isArray(parsed.inventory)) characterData.inventory = parsed.inventory;
                 if (parsed.inspiration !== undefined) characterData.inspiration = parsed.inspiration;
-                if (parsed.spellSlots) characterData.spellSlots = parsed.spellSlots;
+                
+                if (parsed.spellSlots) {
+                    characterData.spellSlots = parsed.spellSlots;
+                }
+                
                 if (parsed.hitDiceUsed !== undefined) characterData.hitDiceUsed = parsed.hitDiceUsed;
                 if (parsed.currency) characterData.currency = parsed.currency;
+                
+                if (Array.isArray(parsed.spells)) {
+                    parsed.spells.forEach((l, lIdx) => {
+                        if (l && Array.isArray(l.items)) {
+                            l.items.forEach((s, sIdx) => {
+                                if(characterData.spells[lIdx] && characterData.spells[lIdx].items && characterData.spells[lIdx].items[sIdx]) {
+                                    characterData.spells[lIdx].items[sIdx].prepared = s.prepared;
+                                }
+                            });
+                        }
+                    });
+                }
                 if (parsed.notes) document.getElementById('session-notes').value = parsed.notes;
+            } catch(e) {
+                console.error("Errore fatale in memoria, reset...", e);
+                localStorage.removeItem(storageKey);
             }
         }
 
         function saveData() {
             const dataToSave = {
+                ac: characterData.ac,
                 hpCurrent: characterData.hpCurrent,
                 inventory: characterData.inventory,
                 inspiration: characterData.inspiration,
                 spellSlots: characterData.spellSlots,
+                spells: characterData.spells,
                 hitDiceUsed: characterData.hitDiceUsed,
                 currency: characterData.currency,
                 notes: document.getElementById('session-notes').value
@@ -517,15 +562,12 @@
         }
 
         function resetData() {
-            if(confirm("Sei sicuro di voler resettare tutti i dati del telefono?")) {
+            if(confirm("Sei sicuro di voler resettare tutti i dati salvati? Questo eliminerà le modifiche recenti alla salute e inventario.")) {
                 localStorage.removeItem(storageKey);
                 location.reload(); 
             }
         }
 
-        // ==========================================
-        // LOGICA INTERFACCIA E RIPOSI
-        // ==========================================
         let lastAttackWasCrit = false;
 
         function switchTab(tabId) {
@@ -535,19 +577,18 @@
             document.getElementById('btn-' + tabId).classList.add('active');
         }
 
-        function toggleInspiration() {
-            // INVERTITO L'ORDINE DI SALVATAGGIO PER EVITARE CHE LOADCHARACTER SOVRASCRIVA IL CLICK
-            characterData.inspiration = !characterData.inspiration;
-            saveData(); 
-            loadCharacter(); 
-        }
-
-        function toggleSpellSlot(level, index) {
-            characterData.spellSlots[level][index] = !characterData.spellSlots[level][index];
+        function toggleInspiration() { characterData.inspiration = !characterData.inspiration; saveData(); loadCharacter(); }
+        
+        function toggleSpellSlot(level, index) { 
+            characterData.spellSlots[level][index] = !characterData.spellSlots[level][index]; 
             saveData(); loadCharacter(); 
         }
-
-        function levelUp() { characterData.level++; saveData(); loadCharacter(); }
+        
+        function togglePrepared(lIdx, sIdx, event) {
+            event.stopPropagation();
+            characterData.spells[lIdx].items[sIdx].prepared = !characterData.spells[lIdx].items[sIdx].prepared;
+            saveData(); loadCharacter();
+        }
 
         function changeHP(amount) {
             characterData.hpCurrent += amount;
@@ -555,6 +596,13 @@
             if (characterData.hpCurrent < 0) characterData.hpCurrent = 0;
             document.querySelectorAll('.char-hp-current-display').forEach(el => el.innerText = characterData.hpCurrent);
             saveData(); 
+        }
+
+        function changeAC(amount) {
+            characterData.ac += amount;
+            if (characterData.ac < 0) characterData.ac = 0;
+            document.querySelectorAll('.char-ac-display').forEach(el => el.innerText = characterData.ac);
+            saveData();
         }
 
         function updateCurrency() {
@@ -575,13 +623,12 @@
             let conMod = parseInt(characterData.stats.COS.replace('+', '')); 
             let totalHeal = 0, rollDetails = [];
             for(let i=0; i<numDice; i++) {
-                let r = Math.floor(Math.random() * 6) + 1;
+                let r = Math.floor(Math.random() * 6) + 1; // Stregone usa d6
                 totalHeal += r + conMod;
                 rollDetails.push(r);
             }
             characterData.hitDiceUsed += numDice;
             changeHP(totalHeal);
-            
             logDice(`☕ Riposo Breve`, totalHeal, `Dadi: ${rollDetails.join(', ')}`, "var(--secondary-color)");
             updateScreen("scheda", "Cura Riposo", totalHeal, `Recuperati HP`);
             loadCharacter(); 
@@ -599,30 +646,31 @@
             }
         }
 
-        // ==========================================
-        // TIRI (STATISTICHE E SCHERMI)
-        // ==========================================
         let rollHistory = [];
 
         function parseAndRollString(diceString, doubleDice = false) {
             let total = 0, logs = [];
-            const match = diceString.match(/(\d+)d(\d+)(?:\s*([+-])\s*(\d+))?/);
-            if (match) {
-                let diceCount = parseInt(match[1]);
-                if (doubleDice) diceCount *= 2; 
-                for (let i = 0; i < diceCount; i++) {
-                    const r = Math.floor(Math.random() * parseInt(match[2])) + 1;
-                    total += r; logs.push(r);
+            const parts = diceString.split('+');
+            let flatTotal = 0;
+
+            parts.forEach(part => {
+                part = part.trim();
+                const match = part.match(/^(\d+)d(\d+)$/);
+                if (match) {
+                    let diceCount = parseInt(match[1]);
+                    if (doubleDice) diceCount *= 2; 
+                    for (let i = 0; i < diceCount; i++) {
+                        const r = Math.floor(Math.random() * parseInt(match[2])) + 1;
+                        total += r; logs.push(r);
+                    }
+                } else {
+                    flatTotal += parseInt(part) || 0;
                 }
-                if (match[3] && match[4]) {
-                    const flat = parseInt(match[4]);
-                    if (match[3] === '+') total += flat; else total -= flat;
-                    logs.push(match[3] + flat);
-                }
-            } else {
-                total = parseInt(diceString) || 0;
-                if(doubleDice) total *= 2; 
-                logs.push(total);
+            });
+
+            if (flatTotal !== 0) {
+                total += flatTotal;
+                logs.push(`+${flatTotal}`);
             }
             return { total, logs: logs.join(' ') };
         }
@@ -641,7 +689,6 @@
             document.getElementById('dice-log').innerHTML = rollHistory.map(log => `<li>${log}</li>`).join('');
         }
 
-        // Tiri Caratteristiche e Abilità
         function rollStat(name, modStr) {
             const mod = parseInt(modStr.replace('+', '')) || 0;
             const d20 = Math.floor(Math.random() * 20) + 1;
@@ -655,15 +702,16 @@
 
             logDice(`🎲 ${name}`, total, screenSub, "var(--text-color)");
             updateScreen("scheda", `Tiro: ${name}`, total, screenSub, critClass);
+            if (name === 'Iniziativa') { updateScreen("battle", `Iniziativa`, total, screenSub, critClass); }
         }
 
-        // Tiri Battaglia
+        function rollInitiative(modStr) { rollStat('Iniziativa', modStr); switchTab('sec-battaglia'); }
+
         function rollAttack(isInv, index) {
             const atkData = isInv ? characterData.inventory[index] : characterData.battleAttacks[index];
             const mod = parseInt((atkData.atk || "+0").replace('+', '')) || 0;
             const d20 = Math.floor(Math.random() * 20) + 1;
             const total = d20 + mod;
-
             lastAttackWasCrit = (d20 === 20);
             let critClass = "", screenSub = `d20: ${d20} + ${mod}`;
             document.getElementById('battle-result-crit').style.color = "#ffd700";
@@ -679,16 +727,63 @@
             const atkData = isInv ? characterData.inventory[index] : characterData.battleAttacks[index];
             const dmgResult = parseAndRollString(atkData.dmg || "0", lastAttackWasCrit);
             let critNotice = lastAttackWasCrit ? "CRITICO APPLICATO!" : `Danno normale`;
-            
             logDice(`💥 ${atkData.name} (Danno)`, dmgResult.total, `${dmgResult.logs} | ${atkData.type||''}`, "var(--danger-color)");
             updateScreen("battle", `Danno: ${atkData.name}`, dmgResult.total, critNotice, lastAttackWasCrit ? 'crit-text' : '');
             lastAttackWasCrit = false; 
+        }
+
+        function rollSpellAttack(lIdx, sIdx) {
+            const spell = characterData.spells[lIdx].items[sIdx];
+            const mod = parseInt((spell.atk || "+0").replace('+', '')) || 0;
+            const d20 = Math.floor(Math.random() * 20) + 1;
+            const total = d20 + mod;
+            lastAttackWasCrit = (d20 === 20);
+            let critClass = "", screenSub = `d20: ${d20} + ${mod}`;
+            document.getElementById('battle-result-crit').style.color = "#ffd700";
+
+            if (d20 === 20) { critClass = "crit-text"; screenSub = "CRITICO! (Danni raddoppiati in memoria)"; }
+            if (d20 === 1) { critClass = "crit-text"; screenSub = "FALLIMENTO CRITICO!"; document.getElementById('battle-result-crit').style.color = "var(--danger-color)"; }
+
+            logDice(`✨ ${spell.name} (TxC)`, total, screenSub);
+            updateScreen("battle", `TxC: ${spell.name}`, total, screenSub, critClass);
+            switchTab('sec-battaglia');
+        }
+
+        function rollSpellDamage(lIdx, sIdx) {
+            const spell = characterData.spells[lIdx].items[sIdx];
+            const dmgResult = parseAndRollString(spell.dmg || "0", lastAttackWasCrit);
+            let critNotice = lastAttackWasCrit ? "CRITICO APPLICATO!" : `Danno base`;
+            logDice(`💥 ${spell.name} (Danno)`, dmgResult.total, `${dmgResult.logs} | ${spell.type||''}`, "var(--danger-color)");
+            updateScreen("battle", `Danno: ${spell.name}`, dmgResult.total, critNotice, lastAttackWasCrit ? 'crit-text' : '');
+            lastAttackWasCrit = false; 
+            switchTab('sec-battaglia');
+        }
+
+        function rollSpellHeal(lIdx, sIdx) {
+            const spell = characterData.spells[lIdx].items[sIdx];
+            const healResult = parseAndRollString(spell.heal || "0");
+            changeHP(healResult.total);
+            logDice(`💊 ${spell.name} (Cura)`, healResult.total, `${healResult.logs}`, "var(--secondary-color)");
+            updateScreen("scheda", `Cura: ${spell.name}`, healResult.total, "HP Recuperati o Condivisi");
+            switchTab('sec-scheda');
         }
 
         function rollSimpleDice(sides) {
             const result = Math.floor(Math.random() * sides) + 1;
             document.getElementById('dice-result').innerText = result;
             logDice(`🎲 d${sides}`, result, `Tiro base`, "var(--text-color)");
+        }
+
+        function rollWildMagic() {
+            const roll = Math.floor(Math.random() * 100) + 1;
+            const index = Math.ceil(roll / 2) - 1; // Mappa da 1-100 a 0-49
+            const effect = wildMagicTable[index];
+            
+            document.getElementById('wild-magic-result').style.display = 'block';
+            document.getElementById('wm-roll').innerText = roll;
+            document.getElementById('wm-effect').innerHTML = effect;
+            
+            logDice(`✨ Wild Magic Surge`, roll, `Vedi dettaglio in Note`, "var(--primary-color)");
         }
 
         // ==========================================
@@ -698,81 +793,91 @@
             const t = document.getElementById('inv-type').value;
             document.getElementById('inv-weapon-fields').style.display = (t === 'weapon') ? 'block' : 'none';
             document.getElementById('inv-potion-fields').style.display = (t === 'potion') ? 'block' : 'none';
+            document.getElementById('inv-armor-fields').style.display = (t === 'armor') ? 'block' : 'none';
+            document.getElementById('inv-qty-container').style.display = (t === 'armor') ? 'none' : 'flex';
         }
+
         function addInventoryItem() {
             const name = document.getElementById('inv-name').value;
             if (!name) return;
             const type = document.getElementById('inv-type').value;
-            const newItem = { name, type, desc: document.getElementById('inv-desc').value, qty: parseInt(document.getElementById('inv-qty').value) || 1 };
+            const newItem = { 
+                name, type, 
+                desc: document.getElementById('inv-desc').value, 
+                qty: (type === 'armor') ? 1 : (parseInt(document.getElementById('inv-qty').value) || 1) 
+            };
+
             if (type === 'weapon') { newItem.atk = document.getElementById('inv-atk').value; newItem.dmg = document.getElementById('inv-dmg').value; } 
-            else if (type === 'potion') { newItem.heal = document.getElementById('inv-heal').value; }
+            else if (type === 'potion') { newItem.heal = document.getElementById('inv-heal').value; } 
+            else if (type === 'armor') { newItem.acBonus = parseInt(document.getElementById('inv-ac-bonus').value) || 0; newItem.equipped = false; }
+
             characterData.inventory.push(newItem);
             document.querySelectorAll('.inv-form input[type=text], .inv-form input[type=number]').forEach(el => el.value = (el.id==='inv-qty')?'1':'');
             saveData(); loadCharacter(); 
         }
+
+        function deleteInventoryItem(index) {
+            let item = characterData.inventory[index];
+            if (item.type === 'armor' && item.equipped) {
+                changeAC(-item.acBonus);
+            }
+            characterData.inventory.splice(index, 1);
+            saveData(); loadCharacter();
+        }
+
         function usePotion(index) {
             const pot = characterData.inventory[index];
             if(!pot || pot.qty <= 0) return;
             let total = parseAndRollString(pot.heal || "0").total;
             changeHP(total);
-            pot.qty--; if(pot.qty <= 0) characterData.inventory.splice(index, 1);
+            pot.qty--; if(pot.qty <= 0) deleteInventoryItem(index);
             logDice(`🧪 ${pot.name}`, total, `Cura HP`, "var(--secondary-color)");
             updateScreen("battle", `Usata: ${pot.name}`, total, "HP Recuperati");
             saveData(); loadCharacter();
+        }
+
+        function toggleEquip(index) {
+            const item = characterData.inventory[index];
+            if (!item || item.type !== 'armor') return;
+            item.equipped = !item.equipped;
+            const bonus = parseInt(item.acBonus) || 0;
+            changeAC(item.equipped ? bonus : -bonus);
+            loadCharacter(); 
         }
 
         // ==========================================
         // ESPORTAZIONE PDF
         // ==========================================
         function exportPDF() {
-            // Mappatura Dati nel Layout PDF Nascosto
-            document.getElementById('pdf-name').innerText = characterData.name;
-            document.getElementById('pdf-class').innerText = characterData.class;
-            document.getElementById('pdf-level').innerText = characterData.level;
-            document.getElementById('pdf-species').innerText = characterData.species;
-            
+            document.getElementById('pdf-name').innerText = characterData.name; document.getElementById('pdf-class').innerText = characterData.class;
+            document.getElementById('pdf-level').innerText = characterData.level; document.getElementById('pdf-species').innerText = characterData.species;
             document.getElementById('pdf-hp').innerText = characterData.hpCurrent + " / " + characterData.hpMax;
-            document.getElementById('pdf-ac').innerText = characterData.ac;
-            document.getElementById('pdf-init').innerText = characterData.initiative;
-            document.getElementById('pdf-dc').innerText = characterData.spellDC;
-            document.getElementById('pdf-spellatk').innerText = characterData.spellAtk;
-
+            document.getElementById('pdf-ac').innerText = characterData.ac; document.getElementById('pdf-init').innerText = characterData.initiative;
+            document.getElementById('pdf-dc').innerText = characterData.spellDC; document.getElementById('pdf-spellatk').innerText = characterData.spellAtk;
             document.getElementById('pdf-stats').innerHTML = Object.entries(characterData.stats).map(([k,v]) => `<div><strong>${k}:</strong> ${v}</div>`).join('');
             document.getElementById('pdf-skills').innerHTML = Object.entries(characterData.skills).map(([k,v]) => `<div>${k} (${v.attr}): <strong>${v.mod}</strong></div>`).join('');
             
             let allAttacks = [...characterData.battleAttacks, ...characterData.inventory.filter(i => i.atk || i.dmg)];
             document.getElementById('pdf-attacks').innerHTML = allAttacks.map(a => `<div><strong>${a.name}</strong> - TxC: ${a.atk||'+0'} | Danno: ${a.dmg||'-'}</div>`).join('');
-            
             document.getElementById('pdf-features').innerHTML = characterData.features.map(f => `<div><strong>${f.name}</strong></div>`).join('');
             
             let spellList = "";
             characterData.spells.forEach(group => {
-                spellList += `<div style="margin-top:10px;"><strong>-- ${group.level} --</strong></div>`;
-                group.items.forEach(s => spellList += `<div>${s.name} (Raggio: ${s.range})</div>`);
+                if (group.items.length > 0) {
+                    spellList += `<div style="margin-top:10px;"><strong>-- ${group.level} --</strong></div>`;
+                    group.items.forEach(s => spellList += `<div>${s.name} ${s.prepared ? '(PREPARATO)' : ''}</div>`);
+                }
             });
             document.getElementById('pdf-spells').innerHTML = spellList;
-            
             document.getElementById('pdf-coins').innerHTML = `<div>Oro: ${characterData.currency.gold} | Argento: ${characterData.currency.silver} | Rame: ${characterData.currency.copper}</div>`;
 
-            // Generazione PDF con html2pdf
-            const element = document.getElementById('pdf-export-template');
-            element.style.display = 'block';
-            
-            const opt = {
-                margin: 10,
-                filename: `${characterData.name.replace(/\s+/g, '_')}_Scheda.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-
-            html2pdf().set(opt).from(element).save().then(() => {
-                element.style.display = 'none';
-            });
+            const element = document.getElementById('pdf-export-template'); element.style.display = 'block';
+            const opt = { margin: 10, filename: `${characterData.name.replace(/\s+/g, '_')}_Scheda.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+            html2pdf().set(opt).from(element).save().then(() => { element.style.display = 'none'; });
         }
 
         // ==========================================
-        // INIZIALIZZAZIONE  E RENDERING VISUALI
+        // RENDERING
         // ==========================================
         function loadCharacter() {
             loadSavedData(); 
@@ -780,69 +885,168 @@
             document.getElementById('char-subtitle').innerText = `${characterData.species} | ${characterData.class}`;
             document.getElementById('char-level').innerText = characterData.level;
             
-            const inspIcon = document.getElementById('insp-icon');
-            const inspCont = document.getElementById('insp-container');
-            if (characterData.inspiration) { 
-                inspIcon.classList.add('active'); inspCont.classList.add('active');
-            } else { 
-                inspIcon.classList.remove('active'); inspCont.classList.remove('active');
-            }
+            const inspIcon = document.getElementById('insp-icon'); const inspCont = document.getElementById('insp-container');
+            if (characterData.inspiration) { inspIcon.classList.add('active'); inspCont.classList.add('active'); } else { inspIcon.classList.remove('active'); inspCont.classList.remove('active'); }
 
             document.querySelectorAll('.char-hp-current-display').forEach(el => el.innerText = characterData.hpCurrent);
             document.querySelectorAll('.char-hp-max-display').forEach(el => el.innerText = characterData.hpMax);
-            document.getElementById('char-ac').innerText = characterData.ac;
+            document.querySelectorAll('.char-ac-display').forEach(el => el.innerText = characterData.ac);
+            
             document.getElementById('char-init').innerText = characterData.initiative;
+            document.getElementById('char-spell-mod').innerText = characterData.spellMod;
             document.getElementById('char-dc').innerText = characterData.spellDC;
             document.getElementById('char-spell-atk').innerText = characterData.spellAtk;
-            document.getElementById('char-sp').innerText = characterData.sorceryPoints;
 
             document.getElementById('coin-gold').value = characterData.currency.gold;
             document.getElementById('coin-silver').value = characterData.currency.silver;
             document.getElementById('coin-copper').value = characterData.currency.copper;
 
-            // Render Caratteristiche e TS (Cliccabili)
             document.getElementById('stats-container').innerHTML = Object.entries(characterData.stats).map(([s, v]) => `<div class="stat-box" onclick="rollStat('${s}', '${v}')"><span>${s}</span><strong>${v}</strong></div>`).join('');
             document.getElementById('saves-container').innerHTML = Object.entries(characterData.savingThrows).map(([s, v]) => `<div class="stat-box" onclick="rollStat('TS ${s}', '${v.replace(/<[^>]*>?/gm, '')}')"><span>${s}</span><strong>${v}</strong></div>`).join('');
-            
-            // Render Abilità (Cliccabili)
-            document.getElementById('skills-container').innerHTML = Object.entries(characterData.skills).map(([name, data]) => `<div class="skill-btn" onclick="rollStat('${name}', '${data.mod}')"><span class="name">${name} <span style="font-weight:normal; color:#777;">(${data.attr})</span></span><span class="mod">${data.mod}</span></div>`).join('');
+            document.getElementById('skills-container').innerHTML = Object.entries(characterData.skills).map(([name, data]) => {
+                return `<div class="skill-btn" onclick="rollStat('${name}', '${data.mod.replace(/<[^>]*>?/gm, '')}')"><span class="name">${name} <span style="font-weight:normal; color:#777;">(${data.attr})</span></span><span class="mod">${data.mod}</span></div>`;
+            }).join('');
 
-            // Render Dadi Vita
             let hdHtml = '<span style="font-size: 12px; color: var(--text-muted); margin-right: 10px;">DADI VITA:</span>';
             for(let i=0; i<characterData.level; i++) hdHtml += `<span class="hd-icon ${i < (characterData.level - characterData.hitDiceUsed) ? 'available' : ''}">🎲</span>`;
             document.getElementById('hd-container').innerHTML = hdHtml;
 
-            // RENDER COMBATTIMENTO
-            let baseAttacksHtml = characterData.battleAttacks.map((atk, i) => `<div class="attack-card"><div class="attack-header"><span class="attack-name">⚔️ ${atk.name}</span><span class="attack-stats">TxC: ${atk.atk} | Danni: ${atk.dmg}</span></div><div class="attack-actions"><button class="action-btn btn-hit" onclick="rollAttack(false, ${i})">🎯 Colpire</button><button class="action-btn btn-dmg" onclick="rollDamage(false, ${i})">💥 Danno</button></div></div>`).join('');
-            let invAtkHtml = "", invPotHtml = "", hasPot = false;
+            // RENDERING BATTAGLIA - ARMI
+            let baseAttacksHtml = characterData.battleAttacks.length > 0 ? characterData.battleAttacks.map((atk, i) => `<div class="attack-card"><div class="attack-header"><span class="attack-name">⚔️ ${atk.name}</span><span class="attack-stats">TxC: ${atk.atk} | Danni: ${atk.dmg}</span></div><div class="attack-actions"><button class="action-btn btn-hit" onclick="rollAttack(false, ${i})">🎯 Colpire</button><button class="action-btn btn-dmg" onclick="rollDamage(false, ${i})">💥 Danno</button></div></div>`).join('') : '';
+            let invAtkHtml = "", invPotHtml = "", hasPot = false, hasWeapon = baseAttacksHtml !== '';
+            
             characterData.inventory.forEach((item, i) => {
                 if (item.type === 'weapon' || item.atk || item.dmg) {
+                    hasWeapon = true;
                     invAtkHtml += `<div class="attack-card" style="border-color: var(--secondary-color);"><div class="attack-header"><span class="attack-name">🎒 ${item.name}</span><span class="attack-stats">TxC: ${item.atk||'+0'} | Danni: ${item.dmg||'0'}</span></div><div class="attack-actions"><button class="action-btn btn-hit" onclick="rollAttack(true, ${i})">🎯 Colpire</button><button class="action-btn btn-dmg" onclick="rollDamage(true, ${i})">💥 Danno</button></div></div>`;
                 } else if (item.type === 'potion') {
                     hasPot = true;
                     invPotHtml += `<div class="attack-card" style="border-color: var(--secondary-color);"><div class="attack-header"><span class="attack-name">🧪 ${item.name} <span style="background:var(--secondary-color); color:#000; padding:2px 6px; border-radius:12px; font-size:10px;">x${item.qty}</span></span><span class="attack-stats">Cura: ${item.heal||'0'}</span></div><div class="attack-actions"><button class="action-btn btn-heal" onclick="usePotion(${i})">💊 Bevi Pozione</button></div></div>`;
                 }
             });
-            document.getElementById('battle-attacks-container').innerHTML = baseAttacksHtml + invAtkHtml;
+
+            if (!hasWeapon) { 
+                document.getElementById('battle-weapons-container').innerHTML = `<p style="color:var(--text-muted); font-size:12px; text-align:center;">Nessun attacco fisico registrato.</p>`;
+                document.getElementById('battle-weapons-wrapper').style.display = 'none';
+            } else { 
+                document.getElementById('battle-weapons-container').innerHTML = baseAttacksHtml + invAtkHtml; 
+                document.getElementById('battle-weapons-wrapper').style.display = 'block';
+            }
+
+            // RENDERING BATTAGLIA - INCANTESIMI PREPARATI
+            let spellAtkHtml = "";
+            let hasCombatSpells = false;
+            
+            characterData.spells.forEach((group, lIdx) => {
+                let levelHtml = "";
+                let levelHasSpells = false;
+                
+                group.items.forEach((spell, sIdx) => {
+                    if (spell.prepared && (spell.atk || spell.dmg || spell.heal)) {
+                        hasCombatSpells = true;
+                        levelHasSpells = true;
+                        let atkBtn = spell.atk ? `<button class="action-btn btn-hit" onclick="rollSpellAttack(${lIdx}, ${sIdx})">🎯 Attacco</button>` : '';
+                        let dmgBtn = spell.dmg ? `<button class="action-btn btn-dmg" onclick="rollSpellDamage(${lIdx}, ${sIdx})">💥 Danno</button>` : '';
+                        let healBtn = spell.heal ? `<button class="action-btn btn-heal" onclick="rollSpellHeal(${lIdx}, ${sIdx})">💊 Cura</button>` : '';
+                        
+                        levelHtml += `
+                        <div class="attack-card" style="border-color: var(--primary-color);">
+                            <div class="attack-header">
+                                <span class="attack-name">✨ ${spell.name}</span>
+                                <span class="attack-stats">${spell.atk ? 'TxC: '+spell.atk : ''} ${spell.dmg ? '| Danno: '+spell.dmg : ''} ${spell.heal ? '| Cura: '+spell.heal : ''}</span>
+                            </div>
+                            <div class="attack-actions">${atkBtn}${dmgBtn}${healBtn}</div>
+                        </div>`;
+                    }
+                });
+
+                if (levelHasSpells) {
+                    spellAtkHtml += `<div style="font-size: 13px; font-weight: bold; color: var(--primary-color); margin: 15px 0 8px 0; border-bottom: 1px dashed #444; padding-bottom: 4px;">-- ${group.level} --</div>` + levelHtml;
+                }
+            });
+            
+            if (hasCombatSpells) {
+                document.getElementById('battle-spells-container').innerHTML = spellAtkHtml;
+                document.getElementById('battle-spells-card').style.display = 'block';
+            } else {
+                document.getElementById('battle-spells-container').innerHTML = '';
+                document.getElementById('battle-spells-card').style.display = 'none';
+            }
+            
             document.getElementById('battle-potions-list').innerHTML = invPotHtml;
             document.getElementById('battle-potions-container').style.display = hasPot ? 'block' : 'none';
 
-            // RENDER INVENTARIO
-            document.getElementById('inventory-container').innerHTML = characterData.inventory.map((item, i) => {
-                let badge = item.type === 'weapon' ? '⚔️' : (item.type === 'potion' ? '🧪' : '🎒');
-                let useBtn = item.type === 'potion' ? `<button onclick="usePotion(${i})" style="background:var(--secondary-color); color:#000; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; cursor:pointer; margin-top:5px;">Usa (Rimaste: ${item.qty})</button>` : '';
-                return `<details><summary>${badge} ${item.name} ${item.qty > 1 ? `x${item.qty}` : ''}</summary><div class="details-content">${item.atk ? `<strong>Attacco:</strong> ${item.atk}<br>` : ''}${item.dmg ? `<strong>Danno:</strong> ${item.dmg}<br>` : ''}${item.heal ? `<strong>Cura:</strong> ${item.heal}<br>` : ''}${item.desc ? `<em>${item.desc}</em><br>` : ''}${useBtn}</div></details>`;
-            }).join('');
+            // INVENTARIO
+            if (characterData.inventory.length === 0) {
+                document.getElementById('inventory-container').innerHTML = `<p style="color:var(--text-muted); font-size:12px; text-align:center;">Zaino vuoto.</p>`;
+            } else {
+                document.getElementById('inventory-container').innerHTML = characterData.inventory.map((item, i) => {
+                    let badge = item.type === 'weapon' ? '⚔' : (item.type === 'potion' ? '🧪' : (item.type === 'armor' ? '🛡️' : '🎒'));
+                    
+                    let actionsHtml = '';
+                    if (item.type === 'potion') {
+                        actionsHtml = `<button onclick="usePotion(${i})" style="background:var(--secondary-color); color:#000; border:none; padding:5px; border-radius:4px; font-weight:bold; cursor:pointer; flex:1;">Usa (x${item.qty})</button>`;
+                    } else if (item.type === 'armor') {
+                        let btnColor = item.equipped ? 'var(--danger-color)' : 'var(--secondary-color)';
+                        let btnText = item.equipped ? 'Rimuovi Armatura' : 'Equipaggia';
+                        actionsHtml = `<button onclick="toggleEquip(${i})" style="background:${btnColor}; color:#000; border:none; padding:5px; border-radius:4px; font-weight:bold; cursor:pointer; flex:1;">${btnText}</button>`;
+                    }
+                    
+                    let deleteBtn = `<button onclick="deleteInventoryItem(${i})" style="background:transparent; color:var(--danger-color); border:1px solid var(--danger-color); padding:5px; border-radius:4px; font-weight:bold; cursor:pointer; flex:1;">🗑️ Elimina</button>`;
 
-            // RENDER SPELLS & TRATTI
-            document.getElementById('features-container').innerHTML = characterData.features.map(f => `<details><summary>${f.name} <span>+</span></summary><div class="details-content">${f.desc}</div></details>`).join('');
-            document.getElementById('spells-container').innerHTML = characterData.spells.map(g => {
-                let slotsHtml = (g.levelId > 0 && characterData.spellSlots[g.levelId]) ? `<div class="slot-container"><span style="font-size:12px; color:var(--text-muted); width:75px;">Slot Usati:</span>` + characterData.spellSlots[g.levelId].map((used, idx) => `<div class="slot-dot ${used ? 'used' : ''}" onclick="toggleSpellSlot(${g.levelId}, ${idx})"></div>`).join('') + `</div>` : '';
-                return `<div class="spell-level">${g.level}</div>${slotsHtml}` + g.items.map(s => `<details><summary>${s.name} <span>▼</span></summary><div class="details-content"><div class="spell-tags"><span>🎯 ${s.range}</span><span>💥 ${s.dmg}</span><span>🗣️ ${s.comp}</span></div><p style="margin-top:10px;">${s.desc}</p></div></details>`).join('');
+                    let btnContainer = `<div style="display:flex; gap:10px; margin-top:10px;">${actionsHtml}${deleteBtn}</div>`;
+
+                    return `<details><summary>${badge} ${item.name} ${item.qty > 1 ? `x${item.qty}` : ''}</summary><div class="details-content">${item.atk ? `<strong>Attacco:</strong> ${item.atk}<br>` : ''}${item.dmg ? `<strong>Danno:</strong> ${item.dmg}<br>` : ''}${item.acBonus ? `<strong>Bonus CA:</strong> +${item.acBonus}<br>` : ''}${item.heal ? `<strong>Cura:</strong> ${item.heal}<br>` : ''}${item.desc ? `<em>${item.desc}</em><br>` : ''}${btnContainer}</div></details>`;
+                }).join('');
+            }
+
+            // TRATTI
+            if (characterData.features.length === 0) {
+                document.getElementById('features-container').innerHTML = `<p style="color:var(--text-muted); font-size:12px; text-align:center;">Nessun privilegio registrato.</p>`;
+            } else {
+                document.getElementById('features-container').innerHTML = characterData.features.map(f => `<details><summary>${f.name} <span>+</span></summary><div class="details-content">${f.desc}</div></details>`).join('');
+            }
+            
+            // INCANTESIMI
+            let spellRender = characterData.spells.map((g, lIdx) => {
+                if (g.items.length === 0) return '';
+                
+                let slotsHtml = '';
+                if (characterData.spellSlots[g.levelId] && characterData.spellSlots[g.levelId].length > 0) {
+                    let dotColor = g.levelId === 'sp' ? 'border-color: var(--secondary-color);' : '';
+                    let slotLabel = g.levelId === 'sp' ? 'Punti Spesi:' : 'Usi Effettuati:';
+                    
+                    slotsHtml = `<div class="slot-container">
+                                    <span style="font-size:12px; color:var(--text-muted); width:75px;">${slotLabel}</span>` + 
+                                    characterData.spellSlots[g.levelId].map((used, idx) => {
+                                        let bgStyle = used && g.levelId === 'sp' ? 'background: var(--secondary-color); box-shadow: 0 0 6px var(--secondary-color);' : '';
+                                        return `<div class="slot-dot ${used ? 'used' : ''}" style="${dotColor} ${bgStyle}" onclick="toggleSpellSlot('${g.levelId}', ${idx})"></div>`;
+                                    }).join('') + 
+                                `</div>`;
+                }
+
+                let groupTitleColor = g.levelId === 'sp' ? 'color: var(--secondary-color);' : '';
+
+                return `<div class="spell-level" style="${groupTitleColor}">${g.level}</div>${slotsHtml}` + g.items.map((s, sIdx) => {
+                    let star = `<span onclick="togglePrepared(${lIdx}, sIdx, event)" style="font-size:16px; cursor:pointer; margin-right:8px; opacity: ${s.prepared ? '1' : '0.3'}; filter: ${s.prepared ? 'grayscale(0)' : 'grayscale(100%)'}; transition: 0.2s;" title="Clicca per Preparare">🌟</span>`;
+                    
+                    let atkBtn = s.atk ? `<button class="action-btn btn-hit" onclick="rollSpellAttack(${lIdx}, ${sIdx})">🎯 Attacco</button>` : '';
+                    let dmgBtn = s.dmg ? `<button class="action-btn btn-dmg" onclick="rollSpellDamage(${lIdx}, ${sIdx})">💥 Danno</button>` : '';
+                    let healBtn = s.heal ? `<button class="action-btn btn-heal" onclick="rollSpellHeal(${lIdx}, ${sIdx})">💊 Cura</button>` : '';
+                    let spellActions = (s.atk || s.dmg || s.heal) ? `<div class="attack-actions" style="margin-top:10px;">${atkBtn}${dmgBtn}${healBtn}</div>` : '';
+
+                    let tags = '';
+                    if (s.atk || s.dmg || s.type) tags += `<span>${s.type || s.dmg || s.atk}</span>`;
+                    if (s.range) tags += `<span>🎯 ${s.range}</span>`;
+
+                    return `<details><summary style="display:flex; align-items:center;"><div>${star}${s.name}</div> <span>▼</span></summary><div class="details-content"><div class="spell-tags">${tags}</div><p style="margin-top:5px; line-height: 1.4;">${s.desc}</p>${spellActions}</div></details>`;
+                }).join('');
             }).join('');
+            
+            document.getElementById('spells-container').innerHTML = spellRender || `<p style="color:var(--text-muted); font-size:12px; text-align:center;">Nessun incantesimo registrato.</p>`;
         }
 
-        window.onload = loadCharacter;
+        document.addEventListener('DOMContentLoaded', loadCharacter);
     </script>
 </body>
 </html>
