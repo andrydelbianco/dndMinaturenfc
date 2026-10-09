@@ -420,7 +420,7 @@
                 {
                     levelId: 1, level: "Livello 1",
                     items: [
-                        { name: "Chromatic Orb", dmg: "3d8", atk: "+7", type: "Vario", range: "27m", desc: "Attacco a distanza. Scegli tipo danno (Acido, Freddo, Fuoco, Fulmine, Veleno, Tuono).", prepared: true },
+                        { name: "Mage Armor", dmg: "-", type: "Difesa", range: "Contatto", desc: "Tocchi una creatura non corazzata. Fino all'uscita dell'incantesimo (8 ore), la sua CA base diventa 13 + il suo modificatore di Destrezza.", prepared: true },
                         { name: "Ray of Sickness", dmg: "2d8", atk: "+7", type: "Veleno", range: "18m", desc: "Attacco a distanza. TS o il bersaglio è avvelenato.", prepared: true },
                         { name: "Witch Bolt", dmg: "1d12", atk: "+7", type: "Fulmine", range: "9m", desc: "Attacco. Danno continuo ogni turno come azione. (Conc)", prepared: true },
                         { name: "Shield", dmg: "-", range: "Personale", desc: "Reazione: +5 CA fino al tuo prossimo turno, blocca Dardo Incantato.", prepared: true }
@@ -1028,7 +1028,7 @@
                 let groupTitleColor = g.levelId === 'sp' ? 'color: var(--secondary-color);' : '';
 
                 return `<div class="spell-level" style="${groupTitleColor}">${g.level}</div>${slotsHtml}` + g.items.map((s, sIdx) => {
-                    let star = `<span onclick="togglePrepared(${lIdx}, sIdx, event)" style="font-size:16px; cursor:pointer; margin-right:8px; opacity: ${s.prepared ? '1' : '0.3'}; filter: ${s.prepared ? 'grayscale(0)' : 'grayscale(100%)'}; transition: 0.2s;" title="Clicca per Preparare">🌟</span>`;
+                    let star = `<span onclick="togglePrepared(${lIdx}, ${sIdx}, event)" style="font-size:16px; cursor:pointer; margin-right:8px; opacity: ${s.prepared ? '1' : '0.3'}; filter: ${s.prepared ? 'grayscale(0)' : 'grayscale(100%)'}; transition: 0.2s;" title="Clicca per Preparare">🌟</span>`;
                     
                     let atkBtn = s.atk ? `<button class="action-btn btn-hit" onclick="rollSpellAttack(${lIdx}, ${sIdx})">🎯 Attacco</button>` : '';
                     let dmgBtn = s.dmg ? `<button class="action-btn btn-dmg" onclick="rollSpellDamage(${lIdx}, ${sIdx})">💥 Danno</button>` : '';
